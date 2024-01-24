@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">Network Pulse</string>
+    <string name="copyright" translatable="false">©2023 Galacticai</string>
+    <string name="overview">Overview</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="settings">Settings</string>
+    <string name="title_network">Network</string>
+    <string name="title_pulse">Pulse</string>
+    <string name="lorem" translatable="false">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</string>
+    <string name="app_description">Keep track of network availability and reliability all day long.</string>
+    <string name="enable_service">Enable Service</string>
+    <string name="service_status_title">Service status:</string>
+    <string name="ok">OK</string>
+    <string name="starting_service">Starting service…</string>
+    <string name="service">Service</string>
+    <string name="not_recommended">not recommended</string>
+    <string name="skip">Skip</string>
+    <string name="enable">Enable</string>
+    <string name="root_required">Root required</string>
+    <string name="root_dialog_text">Root is required to for this feature.</string>
+
+    <string name="notification_permission_title">Enable notification?</string>
+    <string name="notification_permission_text">The persistent notification ensures that NetworkPulse won\'t be killed by the system</string>
+
+    <string name="battery_optimization_title">Ignore battery optimization.</string>
+    <string name="battery_optimization_text">Battery optimization could prevent NetworkPulse from running in the background. Please disable it for NetworkPulse if you want normal behavior.</string>
+    <string name="prepare_activity_title">Getting started…</string>
+    <string name="done">Done</string>
+    <string name="refresh">Refresh</string>
+    <string name="reset">Reset</string>
+    <string name="pulse_interval_setting_description">The delay between network checks</string>
+    <string name="pulse_interval_setting_title">Pulse interval</string>
+</resources>

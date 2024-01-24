@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/action_overview"
+        android:title="Overview"
+        android:icon="@drawable/round_home_24" />
+    <item
+        android:id="@+id/action_dashboard"
+        android:icon="@drawable/round_space_dashboard_24"
+        android:title="@string/dashboard" />
+    <item
+        android:id="@+id/action_settings"
+        android:icon="@drawable/round_settings_24"
+        android:title="@string/settings" />
+</menu>

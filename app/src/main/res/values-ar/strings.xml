@@ -1,0 +1,34 @@
+<resources>
+    <string name="app_name">نبض الشبكة</string>
+    <string name="overview">الملخص</string>
+    <string name="dashboard">لوحة القيادة</string>
+    <string name="settings">إعدادات</string>
+    <string name="title_network">الشبكة</string>
+    <string name="title_pulse">نبض</string>
+    <string name="enable_service">تفعيل الخدمة</string>
+    <string name="app_description">تتبع مدى توفر الشبكة وفعاليتها طوال اليوم.</string>
+    <string name="service_status_title">حالة الخدمة:</string>
+    <string name="ok">حسناً</string>
+    <string name="service">الخدمة</string>
+    <string name="starting_service">يتم تفعيل الخدمة…</string>
+    <string name="skip">تخطي</string>
+    <string name="not_recommended">غير مستحسن</string>
+    <string name="root_required">الروت مطلوب</string>
+    <string name="enable">تفعيل</string>
+    <string name="root_dialog_text">الروت مطلوب لهذة الخاصية.</string>
+
+    <string name="notification_permission_title">تفعيل الإشعار؟</string>
+    <string name="notification_permission_text">الإشعار المستمر سيأكد عدم إنهاء نبض الشبكة من قبل النظام</string>
+
+    <string name="battery_optimization_title">تخطي تحسين البطارية.</string>
+    <string name="battery_optimization_text">قد يؤدي تحسين البطارية إلى منع تشغيل نبض الشبكة في الخلفية. يرجى تعطيل التحسين لنبض الشبكة إذا كنت تريد السلوك الطبيعي.</string>
+
+    <string name="prepare_activity_title">التحضيرات…</string>
+    <string name="done">تم</string>
+    <string name="refresh">إنعاش</string>
+    <string name="reset">إعادة</string>
+
+    <string name="pulse_interval_setting_title">فاصل النبض</string>
+    <string name="pulse_interval_setting_description">الوقت بين فحوصات الشبكة</string>
+
+</resources>
