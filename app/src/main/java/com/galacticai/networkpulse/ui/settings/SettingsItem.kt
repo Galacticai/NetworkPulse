@@ -28,7 +28,7 @@ open class SettingsItem(
     val subtitle: String,
     var grouped: Boolean = false,
     val onResetClick: ((context: Context) -> Unit)? = null,
-    private val content: @Composable () -> Unit,
+    private val content: (@Composable () -> Unit)? = null,
 ) {
     @Composable
     private fun Bones() {
@@ -55,7 +55,7 @@ open class SettingsItem(
                 fontSize = 14.sp
             )
             Spacer(modifier = Modifier.height(5.dp))
-            content()
+            content?.invoke()
         }
     }
 

@@ -31,7 +31,7 @@ open class NumberUnitBase(
     }
 
 
-    override fun toString(): String = shortName
+    override fun toString(): String = longName
     val isBaseUnit: Boolean get() = multiplier == 1.0
 
     object Bit : NumberUnitBase("b", "Bit", 1.0)

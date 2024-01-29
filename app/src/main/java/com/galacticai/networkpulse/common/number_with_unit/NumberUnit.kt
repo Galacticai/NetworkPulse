@@ -9,8 +9,8 @@ data class NumberUnit(
 ) : Jsonable {
 
     companion object {
-        fun fromJson(json: JSONObject): NumberUnit = NumberUnit(
-            NumberUnitPower.fromJson(json.getJSONObject("unitPower")),
+        fun fromJson(json: JSONObject, unitSystem: NumberUnitSystem): NumberUnit = NumberUnit(
+            NumberUnitPower.fromJson(json.getJSONObject("unitPower"), unitSystem),
             NumberUnitBase.fromJson(json.getJSONObject("unitBase"))
         )
     }

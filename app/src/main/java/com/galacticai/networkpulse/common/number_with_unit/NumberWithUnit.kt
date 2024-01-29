@@ -14,7 +14,7 @@ open class NumberWithUnit(val value: Double, val unit: NumberUnit) : Jsonable {
 
         fun fromJson(json: JSONObject): NumberWithUnit = NumberWithUnit(
             json.getDouble("value"),
-            NumberUnit.fromJson(json.getJSONObject("unit"))
+            NumberUnit.fromJson(json.getJSONObject("unit"), NumberUnitSystem.Metric)
         )
     }
 

@@ -10,7 +10,7 @@ sealed class NumberUnitPower(
     val power: Int,
     val unitSystem: NumberUnitSystem,
 ) : Jsonable {
-    override fun toString(): String = shortName
+    override fun toString(): String = longName
     abstract fun getAll(): List<NumberUnitPower>
 
     /** The amount a value should be multiplied by to get the value in the base unit */
@@ -38,13 +38,12 @@ sealed class NumberUnitPower(
         fun fromShortName(shortName: String): NumberUnitPower? =
             Metric.fromShortName(shortName) ?: Binary.fromShortName(shortName)
 
-        fun fromJson(json: JSONObject): NumberUnitPower = when (
-            val unitSystem = NumberUnitSystem.fromJson(json.getJSONObject("unitSystem"))
-        ) {
-            is NumberUnitSystem.Metric -> Metric.fromJson(json)
-            is NumberUnitSystem.Binary -> Binary.fromJson(json)
-            else -> throw IllegalStateException("This method cannot instantiate a NumberUnitPower when the unit system is custom: $unitSystem")
-        }
+        fun fromJson(json: JSONObject, unitSystem: NumberUnitSystem): NumberUnitPower =
+            when (unitSystem) {
+                is NumberUnitSystem.Metric -> Metric.fromJson(json)
+                is NumberUnitSystem.Binary -> Binary.fromJson(json)
+                else -> throw IllegalStateException("This method cannot instantiate a NumberUnitPower when the unit system is custom: $unitSystem")
+            }
     }
 
 

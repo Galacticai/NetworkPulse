@@ -10,7 +10,6 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.galacticai.networkpulse.common.models.Jsonable
-import com.galacticai.networkpulse.common.number_with_unit.NumberUnit
 import com.galacticai.networkpulse.ui.main.screens.dataStore
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
@@ -78,11 +77,9 @@ sealed class Setting<T>(
         keyName = "DownloadSize",
         defaultValue = com.galacticai.networkpulse.models.DownloadSize.Size10K
     ) {
-        override suspend fun getObject(context: Context): com.galacticai.networkpulse.models.DownloadSize {
-            val json = JSONObject(super.get(context))
-            val size = json.getInt("value")
-            val unit = NumberUnit.fromJson(json.getJSONObject("unit"))
-            return com.galacticai.networkpulse.models.DownloadSize.fromString("$size$unit")
-        }
+        override suspend fun getObject(context: Context): com.galacticai.networkpulse.models.DownloadSize =
+            com.galacticai.networkpulse.models.DownloadSize.fromJson(
+                JSONObject(super.get(context))
+            )
     }
 }
