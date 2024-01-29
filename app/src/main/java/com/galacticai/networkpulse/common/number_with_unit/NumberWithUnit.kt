@@ -1,15 +1,26 @@
 package com.galacticai.networkpulse.common.number_with_unit
 
+import com.galacticai.networkpulse.common.models.Jsonable
+import org.json.JSONObject
 import java.text.DecimalFormat
 import kotlin.math.abs
 
-class NumberWithUnit(val value: Double, val unit: NumberUnit) {
+open class NumberWithUnit(val value: Double, val unit: NumberUnit) : Jsonable {
 
     companion object {
-
         /** @return The value in the base unit */
         fun getInBaseUnit(value: Double, currentUnit: NumberUnit): Double =
             value * currentUnit.baseMultiplier
+
+        fun fromJson(json: JSONObject): NumberWithUnit = NumberWithUnit(
+            json.getDouble("value"),
+            NumberUnit.fromJson(json.getJSONObject("unit"))
+        )
+    }
+
+    override fun toJson(): JSONObject = JSONObject().apply {
+        put("value", value)
+        put("unit", unit.toJson())
     }
 
     /** @return The value in the base unit */

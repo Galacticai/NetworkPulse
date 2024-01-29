@@ -22,10 +22,7 @@ fun OverviewScreen(mainActivity: MainActivity) {
     val timeAgo by remember {
         mutableStateOf(MainActivity.formatTimeAgo(MainActivity.chartAfterTime))
     }
-
-
-
-    Column(modifier = Modifier.padding(10.dp)) {
+    Column(modifier = Modifier.padding(horizontal = 10.dp)) {
         AppTitle(
             modifier = Modifier
                 .fillMaxWidth()

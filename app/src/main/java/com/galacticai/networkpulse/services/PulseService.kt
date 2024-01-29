@@ -15,11 +15,13 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.isServiceRunning
-import com.galacticai.networkpulse.databse.LocalDatabase
-import com.galacticai.networkpulse.databse.models.SpeedRecordEntity
 import com.galacticai.networkpulse.common.models.PatientTaskQueue
 import com.galacticai.networkpulse.common.models.TaskInfo
+import com.galacticai.networkpulse.databse.LocalDatabase
+import com.galacticai.networkpulse.databse.models.SpeedRecordEntity
+import com.galacticai.networkpulse.models.settings.Setting
 import com.galacticai.networkpulse.models.speed_record.TimedSpeedRecord
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -39,23 +41,24 @@ class PulseService : Service() {
         const val DEFAULT_INTERVAL = 20_000L
         const val DEFAULT_URL = "https://ipv4.appliwave.testdebit.info/50k.iso"
 
-        fun start(context: Context, interval: Long = DEFAULT_INTERVAL) {
-            context.startService(
-                Intent(context, PulseService::class.java).apply {
-                    putExtra("interval", interval)
-                }
-            )
+        fun start(context: Context) {
+            context.startService(Intent(context, PulseService::class.java))
         }
 
-        fun startIfNotRunning(context: Context, interval: Long = DEFAULT_INTERVAL): Boolean {
+        fun stop(context: Context) {
+            if (!context.isServiceRunning(PulseService::class.java)) return
+            context.stopService(Intent(context, PulseService::class.java))
+        }
+
+        fun startIfNotRunning(context: Context): Boolean {
             if (context.isServiceRunning(PulseService::class.java)) return false
-            start(context, interval)
+            start(context)
             return true
         }
 
         fun setupNotificationChannel(context: Context) {
             val manager = ContextCompat.getSystemService(context, NotificationManager::class.java)
-            if (manager?.getNotificationChannel(PulseService.NOTIFICATION_CHANNEL_ID) != null)
+            if (manager?.getNotificationChannel(NOTIFICATION_CHANNEL_ID) != null)
                 return
 
             val channel = NotificationChannel(
@@ -71,7 +74,7 @@ class PulseService : Service() {
         }
     }
 
-    private var interval = DEFAULT_INTERVAL
+    private var interval = Setting.RequestInterval.defaultValue
     private var url: String = DEFAULT_URL
     private lateinit var timer: Timer
     private lateinit var client: OkHttpClient
@@ -82,9 +85,7 @@ class PulseService : Service() {
     private lateinit var notification: Notification
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val intervalExtra = intent?.getLongExtra("interval", DEFAULT_INTERVAL)
-        if (intervalExtra != null && intervalExtra > 0)
-            interval = intervalExtra
+        runBlocking { interval = Setting.RequestInterval.get(this@PulseService) }
 
         val urlExtra = intent?.getStringExtra("url")
         if (urlExtra != null) url = urlExtra

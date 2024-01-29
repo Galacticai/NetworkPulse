@@ -19,7 +19,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,6 +45,7 @@ import com.galacticai.networkpulse.common.ui.CubicChart
 import com.galacticai.networkpulse.common.ui.CubicChartData
 import com.galacticai.networkpulse.common.ui.CubicChartItem
 import com.galacticai.networkpulse.databse.models.SpeedRecordEntity
+import com.galacticai.networkpulse.models.settings.Setting
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -51,6 +54,12 @@ import java.util.concurrent.TimeUnit
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun RecordsList(modifier: Modifier = Modifier, records: List<SpeedRecordEntity>) {
+    val ctx = LocalContext.current
+    var isFirstDay by remember { mutableStateOf(true) }
+
+    var graphWidth by remember { mutableIntStateOf(Setting.GraphWidth.defaultValue) }
+    LaunchedEffect(Unit) { graphWidth = Setting.GraphWidth.get(ctx) }
+
     Surface(
         color = colorResource(R.color.primaryContainer),
         shape = RoundedCornerShape(20.dp),
@@ -60,7 +69,6 @@ fun RecordsList(modifier: Modifier = Modifier, records: List<SpeedRecordEntity>)
             .graphicsLayer(clip = true)
             .then(modifier)
     ) {
-        var isFirstDay by remember { mutableStateOf(true) }
 
         LazyColumn(modifier = Modifier.fillMaxWidth()) { // Group records by day
             val groupedByDay = records.groupBy { record ->
@@ -84,7 +92,7 @@ fun RecordsList(modifier: Modifier = Modifier, records: List<SpeedRecordEntity>)
 
                 for ((hour, hourRecords) in groupedByHour) {
                     stickyHeader { HourHeader(hour, hourRecords.size) }
-                    item { HourItems(hourRecords.reversed()) }
+                    item { HourItems(hourRecords.reversed(), graphWidth) }
                 }
             }
         }
@@ -164,7 +172,8 @@ fun HourHeader(hour: Int, recordsCount: Int) {
 
 
 @Composable
-fun HourItems(hourRecords: List<SpeedRecordEntity>) {
+fun HourItems(hourRecords: List<SpeedRecordEntity>, graphWidth: Int) {
+    val ctx = LocalContext.current
     Surface(
         color = colorResource(R.color.background),
         shape = RoundedCornerShape(20.dp),
@@ -172,12 +181,11 @@ fun HourItems(hourRecords: List<SpeedRecordEntity>) {
     ) {
         LazyRow {
             item {
-                val widthPerItem = hourRecords.size * 32
                 CubicChart(
                     modifier = Modifier
                         .padding(5.dp)
-                        .width(widthPerItem.dp),
-                    style = defaultChartStyle(LocalContext.current),
+                        .width((hourRecords.size * graphWidth).dp),
+                    style = defaultChartStyle(ctx),
                     height = 200.dp,
 
                     data = CubicChartData(hourRecords.map {

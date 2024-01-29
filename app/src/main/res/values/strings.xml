@@ -30,4 +30,8 @@
     <string name="reset">Reset</string>
     <string name="pulse_interval_setting_description">The delay between network checks</string>
     <string name="pulse_interval_setting_title">Pulse interval</string>
+    <string name="graph_width_setting_title">Graph cell width</string>
+    <string name="graph_width_setting_description">Horizontal width of each cell within a graph</string>
+    <string name="reload">Reload</string>
+    <string name="do_you_want_to_reload_the_app_to_apply_the_changes">Do you want to reload the app to apply the changes?</string>
 </resources>

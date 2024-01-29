@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="download_sizes">
+        <item>@array/a</item>
+        <item>@array/b</item>
+    </array>
+    <string-array name="a">
+        <item>
+
+        </item>
+    </string-array>
+    <string-array name="b">
+        <item>
+
+        </item>
+    </string-array>
+</resources>

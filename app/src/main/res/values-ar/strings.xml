@@ -30,5 +30,9 @@
 
     <string name="pulse_interval_setting_title">فاصل النبض</string>
     <string name="pulse_interval_setting_description">الوقت بين فحوصات الشبكة</string>
+    <string name="graph_width_setting_title">عرض خلية الرسم البياني</string>
+    <string name="graph_width_setting_description">العرض الأفقي لكل خلية داخل الرسم البياني</string>
+    <string name="reload">إعادة التحميل</string>
+    <string name="do_you_want_to_reload_the_app_to_apply_the_changes">هل ترغب في إعادة تحميل البرنامج لتطبيق التغييرات؟</string>
 
 </resources>

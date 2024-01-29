@@ -2,8 +2,8 @@ package com.galacticai.networkpulse.ui
 
 import android.os.Bundle
 import android.util.Log
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -38,7 +38,7 @@ import org.greenrobot.eventbus.Subscribe
 import java.util.Date
 import java.util.concurrent.TimeUnit
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent { MainActivityContent(this) }
@@ -80,7 +80,7 @@ class MainActivity : ComponentActivity() {
 
     @Subscribe
     fun onPulseDone(ev: PulseService.DoneEvent) {
-        chartValues.retainAll { it != null && it.time >= MainActivity.chartAfterTime }
+        chartValues.retainAll { it != null && it.time >= chartAfterTime }
         if (chartValues.size >= 30) chartValues.removeAt(0)
         chartValues.add(ev.timedSpeedRecord)
         Log.d(
@@ -91,7 +91,7 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         val chartAfterTime
-            get() = System.currentTimeMillis() - (1000 * 60 * 10)
+            get() = System.currentTimeMillis() - (1000 * 60 * 5)
 
         fun formatTimeAgo(date: Long?): String {
             if (date == null) return "-"
