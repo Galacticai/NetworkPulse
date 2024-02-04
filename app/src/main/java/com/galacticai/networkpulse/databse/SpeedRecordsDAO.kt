@@ -6,64 +6,67 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.galacticai.networkpulse.databse.models.SpeedRecordEntity
+import com.galacticai.networkpulse.databse.models.SpeedRecord
 
 @Dao
 interface SpeedRecordsDAO {
     companion object {
-        private const val SelectAll = "SELECT * FROM logs"
+        private const val SelectAll = "SELECT * FROM ${SpeedRecord.tableName}"
+        private const val DeleteAll = "DELETE FROM ${SpeedRecord.tableName}"
     }
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(vararg records: SpeedRecordEntity)
+    fun insert(vararg records: SpeedRecord)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun insertOrIgnore(vararg records: SpeedRecordEntity)
+    fun insertOrIgnore(vararg records: SpeedRecord)
 
     @Update
-    fun update(vararg record: SpeedRecordEntity)
+    fun update(vararg record: SpeedRecord)
 
 
     @Query(SelectAll)
-    fun getAll(): List<SpeedRecordEntity>
+    fun getAll(): List<SpeedRecord>
 
+    @Query("$SelectAll WHERE ${SpeedRecord.statusColumn} = 'Success'")
+    fun getAllSuccessful(): List<SpeedRecord>
 
-    @Query("$SelectAll WHERE time = :time")
-    fun get(time: Long): SpeedRecordEntity?
+    @Query("$SelectAll WHERE ${SpeedRecord.timeColumn} = :time")
+    fun get(time: Long): SpeedRecord?
 
-    @Query("$SelectAll WHERE time > :time")
-    fun getAfter(time: Long): List<SpeedRecordEntity>
+    @Query("$SelectAll WHERE ${SpeedRecord.timeColumn} > :time")
+    fun getAfter(time: Long): List<SpeedRecord>
 
-    @Query("$SelectAll WHERE time < :time")
-    fun getBefore(time: Long): List<SpeedRecordEntity>
+    @Query("$SelectAll WHERE ${SpeedRecord.timeColumn} < :time")
+    fun getBefore(time: Long): List<SpeedRecord>
 
-    @Query("$SelectAll WHERE time BETWEEN :from AND :to")
-    fun getBetween(from: Long, to: Long): List<SpeedRecordEntity>
+    @Query("$SelectAll WHERE ${SpeedRecord.timeColumn} BETWEEN :from AND :to")
+    fun getBetween(from: Long, to: Long): List<SpeedRecord>
 
-    @Query("$SelectAll WHERE up > :up")
-    fun getFasterUpload(up: Float): List<SpeedRecordEntity>
+    @Query("$SelectAll WHERE ${SpeedRecord.upColumn} > :up")
+    fun getFasterUpload(up: Float): List<SpeedRecord>
 
-    @Query("$SelectAll WHERE up < :up")
-    fun getSlowerUpload(up: Float): List<SpeedRecordEntity>
+    @Query("$SelectAll WHERE ${SpeedRecord.upColumn} < :up")
+    fun getSlowerUpload(up: Float): List<SpeedRecord>
 
-    @Query("$SelectAll WHERE up BETWEEN :from AND :to")
-    fun getBetweenUpload(from: Float, to: Float): List<SpeedRecordEntity>
+    @Query("$SelectAll WHERE ${SpeedRecord.upColumn} BETWEEN :from AND :to")
+    fun getBetweenUpload(from: Float, to: Float): List<SpeedRecord>
 
-    @Query("$SelectAll WHERE down > :down")
-    fun getFasterDownload(down: Float): List<SpeedRecordEntity>
+    @Query("$SelectAll WHERE ${SpeedRecord.downColumn} > :down")
+    fun getFasterDownload(down: Float): List<SpeedRecord>
 
-    @Query("$SelectAll WHERE down < :down")
-    fun getSlowerDownload(down: Float): List<SpeedRecordEntity>
+    @Query("$SelectAll WHERE ${SpeedRecord.downColumn} < :down")
+    fun getSlowerDownload(down: Float): List<SpeedRecord>
 
-    @Query("$SelectAll WHERE down BETWEEN :from AND :to")
-    fun getBetweenDownload(from: Float, to: Float): List<SpeedRecordEntity>
+    @Query("$SelectAll WHERE ${SpeedRecord.downColumn} BETWEEN :from AND :to")
+    fun getBetweenDownload(from: Float, to: Float): List<SpeedRecord>
 
     @Delete
-    fun delete(vararg record: SpeedRecordEntity)
+    fun delete(vararg record: SpeedRecord)
 
-    @Query("DELETE FROM logs")
+    @Query(DeleteAll)
     fun deleteAll()
 
-    @Query("DELETE FROM logs WHERE time < :time")
+    @Query("$DeleteAll WHERE time < :time")
     fun deleteOlderThan(time: Long)
 }

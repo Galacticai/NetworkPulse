@@ -7,9 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -22,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -32,6 +29,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -41,10 +39,11 @@ import com.galacticai.networkpulse.common.number_with_unit.NumberUnit
 import com.galacticai.networkpulse.common.number_with_unit.NumberUnitBase
 import com.galacticai.networkpulse.common.number_with_unit.NumberUnitPower
 import com.galacticai.networkpulse.common.number_with_unit.NumberWithUnit
-import com.galacticai.networkpulse.common.ui.CubicChart
-import com.galacticai.networkpulse.common.ui.CubicChartData
-import com.galacticai.networkpulse.common.ui.CubicChartItem
-import com.galacticai.networkpulse.databse.models.SpeedRecordEntity
+import com.galacticai.networkpulse.common.ui.graphing.BarChart
+import com.galacticai.networkpulse.common.ui.graphing.BarData
+import com.galacticai.networkpulse.common.ui.graphing.BarStyle
+import com.galacticai.networkpulse.common.ui.graphing.BarValueStyle
+import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.models.settings.Setting
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -53,12 +52,11 @@ import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun RecordsList(modifier: Modifier = Modifier, records: List<SpeedRecordEntity>) {
+fun RecordsList(modifier: Modifier = Modifier, records: List<SpeedRecord>) {
     val ctx = LocalContext.current
-    var isFirstDay by remember { mutableStateOf(true) }
 
-    var graphWidth by remember { mutableIntStateOf(Setting.GraphWidth.defaultValue) }
-    LaunchedEffect(Unit) { graphWidth = Setting.GraphWidth.get(ctx) }
+    var graphSize by remember { mutableIntStateOf(Setting.GraphSize.defaultValue) }
+    LaunchedEffect(Unit) { graphSize = Setting.GraphSize.get(ctx) }
 
     Surface(
         color = colorResource(R.color.primaryContainer),
@@ -76,13 +74,12 @@ fun RecordsList(modifier: Modifier = Modifier, records: List<SpeedRecordEntity>)
                 calendar.timeInMillis = record.time
                 calendar[Calendar.DAY_OF_YEAR] // You can use Calendar.DAY_OF_MONTH for day of the month instead
             }
-
+            val firstDay = groupedByDay.keys.first()
             for ((day, dayRecords) in groupedByDay) {
-                if (isFirstDay) isFirstDay = false
-                else item { Spacer(modifier = Modifier.height(20.dp)) }
-                stickyHeader {
-                    DayHeader(day)
-                }
+                if (day != firstDay)
+                    item { Spacer(modifier = Modifier.height(20.dp)) }
+
+                stickyHeader { DayHeader(day) }
 
                 val groupedByHour = dayRecords.groupBy { record ->
                     val calendar = Calendar.getInstance()
@@ -92,7 +89,7 @@ fun RecordsList(modifier: Modifier = Modifier, records: List<SpeedRecordEntity>)
 
                 for ((hour, hourRecords) in groupedByHour) {
                     stickyHeader { HourHeader(hour, hourRecords.size) }
-                    item { HourItems(hourRecords.reversed(), graphWidth) }
+                    item { HourItems(hourRecords.reversed(), graphSize) }
                 }
             }
         }
@@ -124,7 +121,8 @@ fun DayHeader(day: Int) {
         Text(
             textAlign = TextAlign.Center,
             text = hourText,
-            fontSize = 14.sp,
+            fontSize = 12.sp,
+            letterSpacing = .2f.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .fillMaxWidth()
@@ -162,7 +160,7 @@ fun HourHeader(hour: Int, recordsCount: Int) {
             )
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                "$recordsCount records",
+                "$recordsCount ${stringResource(R.string.records)}",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Light,
             )
@@ -172,33 +170,61 @@ fun HourHeader(hour: Int, recordsCount: Int) {
 
 
 @Composable
-fun HourItems(hourRecords: List<SpeedRecordEntity>, graphWidth: Int) {
+fun HourItems(hourRecords: List<SpeedRecord>, graphWidth: Int) {
     val ctx = LocalContext.current
     Surface(
         color = colorResource(R.color.background),
         shape = RoundedCornerShape(20.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        LazyRow {
-            item {
-                CubicChart(
-                    modifier = Modifier
-                        .padding(5.dp)
-                        .width((hourRecords.size * graphWidth).dp),
-                    style = defaultChartStyle(ctx),
-                    height = 200.dp,
-
-                    data = CubicChartData(hourRecords.map {
-                        val msUnit = TimeUnit.MILLISECONDS
-                        val m = msUnit.toMinutes(it.time) % 60
-                        val s = msUnit.toSeconds(it.time) % 60
-                        val label = "${m}:${s}s"
-                        val value = it.down ?: 0f
-                        return@map CubicChartItem(label, value)
-                    }),
-                )
-            }
-        }
+        BarChart(
+            startAsScrolledToEnd = true,
+            bgColor = colorResource(R.color.background),
+            barStyle = BarStyle(
+                color = { d, _ -> Color(ctx.getColor(R.color.primary)).copy(alpha = .85f) },
+                heightMax = 200.dp,
+                width = graphWidth.dp,
+                radius = 20.dp,
+            ),
+            yValueStyle = BarValueStyle.YBarValueStyle(
+                bgColor = { _, _ ->
+                    Color(ctx.getColor(R.color.secondaryContainer)).copy(alpha = .8f)
+                },
+                color = { _, _ ->
+                    Color(ctx.getColor(R.color.secondary))
+                },
+                format = { v, _ ->
+                    val n = NumberWithUnit(
+                        v.toDouble(),
+                        NumberUnit(NumberUnitPower.Binary.Kibi, NumberUnitBase.Byte)
+                    ) //.toNearestUnit() //TODO: use after fixing
+                    "${n.value.toInt()} ${n.unit.shortUnit}/s"
+                },
+            ),
+            xValueStyle = BarValueStyle.XBarValueStyle(
+                bgColor = { record, _, _ ->
+                    if (record.isError) Color(ctx.getColor(R.color.onError))
+                    else if (record.isTimeout) Color(ctx.getColor(R.color.onWarning))
+                    else Color(ctx.getColor(R.color.onPrimary)).copy(alpha = .75f)
+                },
+                color = { record, _, _ ->
+                    if (record.isError) Color(ctx.getColor(R.color.error))
+                    else if (record.isTimeout) Color(ctx.getColor(R.color.warning))
+                    else Color(ctx.getColor(R.color.primary))
+                },
+                fontWeight = FontWeight.Normal,
+                format = { _, d, _ -> d.label },
+            ),
+            parser = {
+                val unit = TimeUnit.MILLISECONDS
+                val m = unit.toMinutes(it.time) % 60
+                val s = unit.toSeconds(it.time) % 60
+                val label = "${m}m ${s}s"
+                val value = it.down ?: 0f
+                BarData(label, value)
+            },
+            data = hourRecords
+        )
     }
 }
 
@@ -215,7 +241,7 @@ fun generateColor(x: Float, xMin: Float, xMax: Float, colorMin: Color, colorMax:
 }
 
 @Composable
-fun RecordItem(record: SpeedRecordEntity) {
+fun RecordItem(record: SpeedRecord) {
     val hourText = SimpleDateFormat("hh:mm:ss a", Locale.getDefault()).format(record.time)
 
     @Composable
@@ -229,7 +255,7 @@ fun RecordItem(record: SpeedRecordEntity) {
 
     val iconVector: ImageVector
     val iconDescription: String
-    if (record.down == null) {
+    if (!record.isSuccess) {
         iconVector = Icons.Filled.Warning
         iconDescription = "Status: no data"
     } else {
@@ -237,16 +263,6 @@ fun RecordItem(record: SpeedRecordEntity) {
         iconDescription = "Status: ok"
     }
 
-    //    Column {
-    //        Icon(imageVector = iconVector, contentDescription = iconDescription)
-    //        Text(hourText, color = color())
-    //        if (record.down != null) {
-    //            val down = NetSpeed(
-    //                record.down.toDouble(), NumberUnit(NumberUnitPower.Binary.Kibi, NumberUnitBase.Byte)
-    //            ).toNearestUnit()
-    //            Text(down.toString(), color = color())
-    //        }
-    //    }
     Row(
         verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()
 

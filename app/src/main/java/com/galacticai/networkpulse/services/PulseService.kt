@@ -18,9 +18,8 @@ import com.galacticai.networkpulse.common.isServiceRunning
 import com.galacticai.networkpulse.common.models.PatientTaskQueue
 import com.galacticai.networkpulse.common.models.TaskInfo
 import com.galacticai.networkpulse.databse.LocalDatabase
-import com.galacticai.networkpulse.databse.models.SpeedRecordEntity
+import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.models.settings.Setting
-import com.galacticai.networkpulse.models.speed_record.TimedSpeedRecord
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -38,8 +37,6 @@ class PulseService : Service() {
     companion object {
         const val POST_NOTIFICATIONS = "android.permission.POST_NOTIFICATIONS"
         const val NOTIFICATION_CHANNEL_ID = "PulseServiceChannel"
-        const val DEFAULT_INTERVAL = 20_000L
-        const val DEFAULT_URL = "https://ipv4.appliwave.testdebit.info/50k.iso"
 
         fun start(context: Context) {
             context.startService(Intent(context, PulseService::class.java))
@@ -75,7 +72,7 @@ class PulseService : Service() {
     }
 
     private var interval = Setting.RequestInterval.defaultValue
-    private var url: String = DEFAULT_URL
+    private var downloadSize = Setting.DownloadSize.defaultObject
     private lateinit var timer: Timer
     private lateinit var client: OkHttpClient
 
@@ -85,10 +82,11 @@ class PulseService : Service() {
     private lateinit var notification: Notification
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        runBlocking { interval = Setting.RequestInterval.get(this@PulseService) }
 
-        val urlExtra = intent?.getStringExtra("url")
-        if (urlExtra != null) url = urlExtra
+        runBlocking {
+            interval = Setting.RequestInterval.get(this@PulseService)
+            downloadSize = Setting.DownloadSize.getObject(this@PulseService)
+        }
 
         val ms = TimeUnit.MILLISECONDS
         client = OkHttpClient.Builder()
@@ -129,7 +127,7 @@ class PulseService : Service() {
                 Duration.ofMillis(interval)
             ) {
                 Log.d("PulseService", "Running request")
-                val req = Request.Builder().url(url).build()
+                val req = Request.Builder().url(downloadSize.url).build()
                 val call = client.newCall(req)
                 return@addRunRoll call.execute()
             }
@@ -162,16 +160,28 @@ class PulseService : Service() {
 
     private fun event(ev: Any) = EventBus.getDefault().post(ev)
 
-    data class DoneEvent(val timedSpeedRecord: TimedSpeedRecord)
+    data class DoneEvent(val timedSpeedRecord: SpeedRecord)
 
-    data class OtherEvent(val timestamp: Long, val response: Response?, val runtime: Duration)
+    data class OtherEvent(
+        val timestamp: Long,
+        val record: SpeedRecord,
+        val response: Response?,
+        val runtime: Duration
+    )
 
     data class TimeoutEvent(
-        val key: Long, val timeout: Duration, val startedAt: Date
+        val key: Long,
+        val record: SpeedRecord,
+        val timeout: Duration,
+        val startedAt: Date
     )
 
     data class ErrorEvent(
-        val key: Long, val error: Exception, val startedAt: Date, val runtime: Duration
+        val key: Long,
+        val record: SpeedRecord,
+        val error: Exception,
+        val startedAt: Date,
+        val runtime: Duration
     )
 
 
@@ -185,7 +195,12 @@ class PulseService : Service() {
     }
 
     private fun onTimeoutListener(timestamp: Long, timeout: Duration, startTime: Date) {
-        event(TimeoutEvent(timestamp, timeout, startTime))
+        val record =
+            SpeedRecord(timestamp, SpeedRecord.Status.Timeout.toInt())
+        LocalDatabase.getDB(this).apply {
+            speedRecordsDAO().insert(record)
+        }.close()
+        event(TimeoutEvent(timestamp, record, timeout, startTime))
     }
 
     private fun onErrorListener(
@@ -194,10 +209,15 @@ class PulseService : Service() {
         startTime: Date,
         runtime: Duration
     ) {
-        when (error) {
-            is IOException -> event(ErrorEvent(timestamp, error, startTime, runtime))
-            is IllegalStateException -> throw error
-        }
+        //? only IOException by OkHttp's call.execute() indicates a failed request,
+        //? the rest are accidental and should be fixed
+        if (error !is IOException) throw error
+
+        val record = SpeedRecord(timestamp, SpeedRecord.Status.Error.toInt())
+        LocalDatabase.getDB(this).apply {
+            speedRecordsDAO().insert(record)
+        }.close()
+        event(ErrorEvent(timestamp, record, error, startTime, runtime))
     }
 
     private fun onFinallyListener(timestamp: Long, info: TaskInfo<Response>) {
@@ -213,19 +233,35 @@ class PulseService : Service() {
     }
 
     private fun onResponseOk(timestamp: Long, response: Response, runtime: Duration) {
-        val bodySize = response.body?.string()?.length?.toFloat() ?: 0f
-        val speed = bodySize / runtime.toMillis()
-        val record = TimedSpeedRecord(timestamp, 0f, speed)
+        val record = SpeedRecord(
+            timestamp,
+            SpeedRecord.Status.Success.toInt(),
+            runtime.toMillis().toInt(),
+            0f,
+            SpeedRecord.getDownSpeed(response, runtime.toMillis().toInt())
+        )
 
         LocalDatabase.getDB(this).apply {
-            speedRecordsDAO().insert(SpeedRecordEntity.fromModel(record))
+            speedRecordsDAO().insert(record)
         }.close()
 
         event(DoneEvent(record))
     }
 
     private fun onResponseOther(timestamp: Long, response: Response?, runtime: Duration) {
-        event(OtherEvent(timestamp, response, runtime))
+        val runtimeMS = runtime.toMillis().toInt()
+        val record: SpeedRecord =
+            if (response == null) SpeedRecord(
+                timestamp, 0, runtimeMS, null, null
+            ) else SpeedRecord(
+                timestamp, response.code, runtimeMS, 0f,
+                SpeedRecord.getDownSpeed(response, runtimeMS)
+            )
+
+        LocalDatabase.getDB(this).apply {
+            speedRecordsDAO().insert(record)
+        }.close()
+        event(OtherEvent(timestamp, record, response, runtime))
     }
 
 

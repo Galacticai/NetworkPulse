@@ -6,12 +6,14 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
@@ -23,7 +25,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -35,17 +36,24 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
+import com.gigamole.composefadingedges.content.FadingEdgesContentType
+import com.gigamole.composefadingedges.fill.FadingEdgesFillType
+import com.gigamole.composefadingedges.verticalFadingEdges
 
 @Composable
 fun ExpandableGroup(
     title: String,
     withDivider: Boolean = true,
+    radius: Dp = 20.dp,
+    padding: Dp = 20.dp,
+    expandedHeight: Dp? = null,
+    expandedFontWeight: FontWeight = FontWeight.W100,
+    collapsedFontWeight: FontWeight = FontWeight.W900,
     vararg items: @Composable () -> Unit
 ) {
     var expanded by rememberSaveable { mutableStateOf(true) }
 
-    val padding = 20.dp
-    val roundedCorner = RoundedCornerShape(padding)
+    val roundedCorner = RoundedCornerShape(radius)
     val primaryContainer = colorResource(R.color.primaryContainer)
 
     Surface(
@@ -77,11 +85,10 @@ fun ExpandableGroup(
                     ) {
                         Text(
                             text = title,
-                            fontWeight = if (it) FontWeight.W200 else FontWeight.Bold,
-                            fontSize =  18.sp,
+                            fontWeight = if (it) expandedFontWeight else collapsedFontWeight,
+                            fontSize = 18.sp,
                         )
                         Spacer(modifier = Modifier.weight(1f))
-
                         Icon(
                             if (it) Icons.Rounded.KeyboardArrowUp
                             else Icons.Rounded.KeyboardArrowDown,
@@ -94,23 +101,51 @@ fun ExpandableGroup(
             Surface(
                 color = colorResource(R.color.background),
                 shape = roundedCorner,
-                modifier = Modifier.padding(padding / 10),
+                modifier = Modifier.padding(
+                    bottom = 2.dp,
+                    start = 2.dp,
+                    end = 2.dp
+                ),
             ) {
                 AnimatedVisibility(
                     visible = expanded,
                     enter = expandVertically(),
                 ) {
-                    Column(modifier = Modifier.padding(padding)) {
-                        for ((i, item) in items.withIndex()) {
-                            if (withDivider) {
-                                if (i > 0 && i < items.size) {
-                                    Divider(
-                                        modifier = Modifier.padding(vertical = padding / 2),
-                                        color = colorResource(R.color.primaryContainer)
-                                    )
-                                }
+                    @Composable
+                    fun content(i: Int, item: @Composable () -> Unit) {
+                        if (withDivider && i > 0 && i < items.size) {
+                            Divider(
+                                modifier = Modifier.padding(vertical = padding / 2),
+                                color = colorResource(R.color.primaryContainer)
+                            )
+                        }
+                        item()
+                    }
+
+                    if (expandedHeight == null) {
+                        Column(modifier = Modifier.padding(padding)) {
+                            for ((i, item) in items.withIndex())
+                                content(i, item)
+                        }
+                    } else {
+                        //                        FadingScrollView(
+                        //                            Orientation.Vertical,
+                        //                            length = 10.dp,
+                        //                            modifier = Modifier
+                        //                                .padding(padding)
+                        //                                .height(expandedHeight),
+                        //                        ) {
+                        //                            for ((i, item) in items.withIndex())
+                        //                                content(i, item)
+                        //                        }
+                        LazyColumn(
+                            modifier = Modifier
+                                .padding(padding)
+                                .height(expandedHeight)
+                        ) {
+                            items.forEachIndexed { i, item ->
+                                item { content(i, item) }
                             }
-                            item()
                         }
                     }
                 }
@@ -122,25 +157,31 @@ fun ExpandableGroup(
 @Preview(showBackground = true)
 @Composable
 fun PreviewExpandableGroup() {
-    Column(modifier = Modifier
-        .height(500.dp)
-        .padding(10.dp)) {
+    Column(
+        modifier = Modifier
+            .height(500.dp)
+            .padding(10.dp)
+    ) {
         ExpandableGroup(
-            "Title", true,
-            { Text("Item 1") },
-            { Text("Item 2") },
-            { Text("Item 3") },
-            { Text("Item 4") },
-            { Text("Item 5") },
+            title = "Title", expandedHeight = 100.dp,
+            items = arrayOf(
+                { Text("Item 1") },
+                { Text("Item 2") },
+                { Text("Item 3") },
+                { Text("Item 4") },
+                { Text("Item 5") },
+            )
         )
         Spacer(modifier = Modifier.height(10.dp))
         ExpandableGroup(
-            "Title", true,
-            { Text("Item 1") },
-            { Text("Item 2") },
-            { Text("Item 3") },
-            { Text("Item 4") },
-            { Text("Item 5") },
+            title = "Title",
+            items = arrayOf(
+                { Text("Item 1") },
+                { Text("Item 2") },
+                { Text("Item 3") },
+                { Text("Item 4") },
+                { Text("Item 5") },
+            )
         )
     }
 }

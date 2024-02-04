@@ -7,6 +7,8 @@ data class NumberUnit(
     val unitPower: NumberUnitPower,
     val unitBase: NumberUnitBase,
 ) : Jsonable {
+    val shortUnit get() = unitPower.shortName + unitBase.shortName
+    val longUnit get() = unitPower.longName + unitBase.longName
 
     companion object {
         fun fromJson(json: JSONObject, unitSystem: NumberUnitSystem): NumberUnit = NumberUnit(
@@ -20,7 +22,7 @@ data class NumberUnit(
         put("unitBase", unitBase.toJson())
     }
 
-    override fun toString(): String = "$unitPower$unitBase"
+    override fun toString(): String = shortUnit
 
     /** The amount a value should be multiplied by to get the value in the base unit */
     val baseMultiplier get() = unitPower.baseMultiplier

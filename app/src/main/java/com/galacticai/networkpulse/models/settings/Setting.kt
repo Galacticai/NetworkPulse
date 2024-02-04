@@ -22,7 +22,7 @@ sealed class Setting<T>(
     companion object {
         suspend fun restoreAll(context: Context) {
             RequestInterval.restoreDefault(context)
-            GraphWidth.restoreDefault(context)
+            GraphSize.restoreDefault(context)
             DownloadSize.restoreDefault(context)
         }
     }
@@ -52,10 +52,10 @@ sealed class Setting<T>(
 
     sealed class SettingsObject<T : Jsonable>(
         keyName: String,
-        defaultValue: Jsonable
+        val defaultObject: T
     ) : Setting<String>(
         keyName,
-        defaultValue.toJson().toString()
+        defaultObject.toJson().toString()
     ) {
         open suspend fun setObject(context: Context, value: T) =
             super.set(context, value.toJson().toString())
@@ -68,14 +68,14 @@ sealed class Setting<T>(
         defaultValue = 20_000L
     )
 
-    data object GraphWidth : Setting<Int>(
-        keyName = "GraphWidth",
-        defaultValue = 32
+    data object GraphSize : Setting<Int>(
+        keyName = "GraphSize",
+        defaultValue = 35
     )
 
     data object DownloadSize : SettingsObject<com.galacticai.networkpulse.models.DownloadSize>(
         keyName = "DownloadSize",
-        defaultValue = com.galacticai.networkpulse.models.DownloadSize.Size10K
+        defaultObject = com.galacticai.networkpulse.models.DownloadSize.Size10K
     ) {
         override suspend fun getObject(context: Context): com.galacticai.networkpulse.models.DownloadSize =
             com.galacticai.networkpulse.models.DownloadSize.fromJson(

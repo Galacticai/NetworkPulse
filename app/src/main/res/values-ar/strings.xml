@@ -2,7 +2,7 @@
     <string name="app_name">نبض الشبكة</string>
     <string name="overview">الملخص</string>
     <string name="dashboard">لوحة القيادة</string>
-    <string name="settings">إعدادات</string>
+    <string name="settings">الإعدادات</string>
     <string name="title_network">الشبكة</string>
     <string name="title_pulse">نبض</string>
     <string name="enable_service">تفعيل الخدمة</string>
@@ -28,19 +28,28 @@
     <string name="refresh">إنعاش</string>
     <string name="reset">إعادة</string>
 
-    <string name="pulse_interval_setting_title">فاصل النبض</string>
+    <string name="pulse_setting_group_title">النبض</string>
+    <string name="pulse_interval_setting_title">فاصل النبضات</string>
     <string name="pulse_interval_setting_description">الوقت بين فحوصات الشبكة</string>
-    <string name="graph_width_setting_title">عرض خلية الرسم البياني</string>
-    <string name="graph_width_setting_description">العرض الأفقي لكل خلية داخل الرسم البياني</string>
+    <string name="graph_size_setting_title">حجم خلية الرسم البياني</string>
+    <string name="graph_size_setting_description">الحجم الأفقي لكل خلية داخل الرسم البياني</string>
     <string name="reload">إعادة التحميل</string>
     <string name="do_you_want_to_reload_the_app_to_apply_the_changes">هل ترغب في إعادة تحميل البرنامج لتطبيق التغييرات؟</string>
-    <string name="display">Display</string>
+    <string name="display">العرض</string>
     <string name="download_size_setting_title">حجم التنزيل</string>
     <string name="download_size_setting_description">حجم التنزيل في كل نبضة\n - الحجم الكبير يؤدي إلى نتائج أكثر دقة\n - الحجم الصغير يؤدي إلى استخدام أقل للبيانات</string>
-    <string name="about">نبذة عن</string>
+    <string name="about_app">حول التطبيق</string>
     <string name="copyright">حقوق النشر</string>
     <string name="license">الرخصة</string>
     <string name="more_information">المزيد من المعلومات…</string>
-    <string name="version">Version</string>
+    <string name="version">الإصدار</string>
+    <string name="github_repository">مستودع GitHub</string>
+    <string name="records">سجلات</string>
+    <string name="all_releases">كل الإصدارات</string>
+    <string name="about_gpl_3_0">حول GPL 3.0</string>
+    <string name="open">فتح…</string>
+    <string name="data_usage_setting_title">استخدام البيانات</string>
+    <string name="data_usage_setting_description">مقدار البيانات التي سيتم استخدامها كل يوم مع الإعدادات الحالية</string>
+    <string name="day">يوم</string>
 
 </resources>

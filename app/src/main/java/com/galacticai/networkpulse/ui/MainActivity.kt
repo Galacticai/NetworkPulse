@@ -21,8 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import com.galacticai.networkpulse.common.ui.CubicChartData
 import com.galacticai.networkpulse.common.ui.CubicChartItem
 import com.galacticai.networkpulse.databse.LocalDatabase
-import com.galacticai.networkpulse.databse.models.SpeedRecordEntity
-import com.galacticai.networkpulse.models.speed_record.TimedSpeedRecord
+import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.services.PulseService
 import com.galacticai.networkpulse.ui.common.AppTitle
 import com.galacticai.networkpulse.ui.main.HourGraph
@@ -46,7 +45,7 @@ class MainActivity : AppCompatActivity() {
         EventBus.getDefault().register(this)
         PulseService.startIfNotRunning(this)
 
-        val values = getChartValuesFromDB().map { it.toModel() }
+        val values = getChartValuesFromDB()
         chartValues.addAll(values)
     }
 
@@ -57,30 +56,24 @@ class MainActivity : AppCompatActivity() {
 
 
     val dao get() = LocalDatabase.getDBMainThread(this).speedRecordsDAO()
-    fun getChartValuesFromDB(): List<SpeedRecordEntity> =
+    fun getChartValuesFromDB(): List<SpeedRecord> =
         dao.getAfter(chartAfterTime)
 
-    fun getAllValuesFromDB(): List<SpeedRecordEntity> =
+    fun getAllValuesFromDB(): List<SpeedRecord> =
         dao.getAll()
 
-    val chartValues = mutableStateListOf<TimedSpeedRecord?>()
+    val chartValues = mutableStateListOf<SpeedRecord>()
     val chartData
         get() = CubicChartData(chartValues.map {
-            val label: String
-            val value: Float
-            if (it == null) {
-                label = "!"
-                value = 0f
-            } else {
-                label = formatTimeAgo(it.time)
-                value = it.down
-            }
-            return@map CubicChartItem(label, value)
+            CubicChartItem(
+                formatTimeAgo(it.time),
+                it.down ?: 0f
+            )
         })
 
     @Subscribe
     fun onPulseDone(ev: PulseService.DoneEvent) {
-        chartValues.retainAll { it != null && it.time >= chartAfterTime }
+        chartValues.retainAll { it.time >= chartAfterTime }
         if (chartValues.size >= 30) chartValues.removeAt(0)
         chartValues.add(ev.timedSpeedRecord)
         Log.d(
@@ -161,26 +154,146 @@ fun MainActivityDefaultPreview() {
                 Text("Records in the last 5m: (10)")
                 RecordsList(
                     records = listOf(
-                        SpeedRecordEntity(Date().time - 0 * 60 * 1000, 10f, 10f),
-                        SpeedRecordEntity(Date().time - 1 * 60 * 1000, 10f, 0f),
-                        SpeedRecordEntity(Date().time - 1 * 6 * 1000, 10f, 15f),
-                        SpeedRecordEntity(Date().time - 4 * 60 * 1100, 10f, 9f),
-                        SpeedRecordEntity(Date().time - 2 * 60 * 1000, 10f, 10f),
-                        SpeedRecordEntity(Date().time - 5 * 60 * 1000, 10f, 5f),
-                        SpeedRecordEntity(Date().time - 5 * 60 * 1400, 10f, 10f),
-                        SpeedRecordEntity(Date().time - 5 * 60 * 1001, 10f, 10f),
-                        SpeedRecordEntity(Date().time - 5 * 60 * 1000, 10f, 3f),
-                        SpeedRecordEntity(Date().time - 5 * 60 * 1010, 10f, 7f),
-                        SpeedRecordEntity(Date().time - 0 * 60 * 1000, 10f, 10f),
-                        SpeedRecordEntity(Date().time - 1 * 60 * 1200, 10f, 0f),
-                        SpeedRecordEntity(Date().time - 1 * 60 * 2000, 10f, 15f),
-                        SpeedRecordEntity(Date().time - 4 * 60 * 1000, 10f, 9f),
-                        SpeedRecordEntity(Date().time - 2 * 60 * 1000, 10f, 10f),
-                        SpeedRecordEntity(Date().time - 5 * 60 * 1000, 10f, 5f),
-                        SpeedRecordEntity(Date().time - 5 * 60 * 140, 10f, 10f),
-                        SpeedRecordEntity(Date().time - 5 * 60 * 1000, 10f, 10f),
-                        SpeedRecordEntity(Date().time - 5 * 60 * 1500, 10f, 3f),
-                        SpeedRecordEntity(Date().time - 5 * 60 * 1100, 10f, 7f),
+                        SpeedRecord(
+                            Date().time - 0 * 60 * 1000,
+                            SpeedRecord.Status.Success.toInt(),
+                            2382,
+                            10f,
+                            10f
+                        ),
+                        SpeedRecord(
+                            Date().time - 1 * 60 * 1000,
+                            SpeedRecord.Status.Success.toInt(),
+                            2382,
+                            10f,
+                            0f
+                        ),
+                        SpeedRecord(
+                            Date().time - 1 * 6 * 1000,
+                            SpeedRecord.Status.Success.toInt(),
+                            2382,
+                            10f,
+                            15f
+                        ),
+                        SpeedRecord(
+                            Date().time - 4 * 60 * 1100,
+                            SpeedRecord.Status.Success.toInt(),
+                            2382,
+                            10f,
+                            9f
+                        ),
+                        SpeedRecord(
+                            Date().time - 2 * 60 * 1000,
+                            SpeedRecord.Status.Success.toInt(),
+                            2382,
+                            10f,
+                            10f
+                        ),
+                        SpeedRecord(
+                            Date().time - 5 * 60 * 1000,
+                            SpeedRecord.Status.Error.toInt(),
+                            2382,
+                            0f,
+                            5f
+                        ),
+                        SpeedRecord(
+                            Date().time - 5 * 60 * 1400,
+                            SpeedRecord.Status.Timeout.toInt(),
+                            2382,
+                            10f,
+                            10f
+                        ),
+                        SpeedRecord(
+                            Date().time - 5 * 60 * 1001,
+                            SpeedRecord.Status.Success.toInt(),
+                            2382,
+                            10f,
+                            10f
+                        ),
+                        SpeedRecord(
+                            Date().time - 5 * 60 * 1000,
+                            SpeedRecord.Status.Success.toInt(),
+                            2382,
+                            10f,
+                            3f
+                        ),
+                        SpeedRecord(
+                            Date().time - 5 * 60 * 1010,
+                            SpeedRecord.Status.Success.toInt(),
+                            2382,
+                            10f,
+                            7f
+                        ),
+                        SpeedRecord(
+                            Date().time - 0 * 60 * 1000,
+                            SpeedRecord.Status.Success.toInt(),
+                            2382,
+                            10f,
+                            10f
+                        ),
+                        SpeedRecord(
+                            Date().time - 1 * 60 * 1200,
+                            SpeedRecord.Status.Success.toInt(),
+                            2382,
+                            10f,
+                            0f
+                        ),
+                        SpeedRecord(
+                            Date().time - 1 * 60 * 2000,
+                            SpeedRecord.Status.Success.toInt(),
+                            2382,
+                            10f,
+                            15f
+                        ),
+                        SpeedRecord(
+                            Date().time - 4 * 60 * 1000,
+                            SpeedRecord.Status.Success.toInt(),
+                            2382,
+                            10f,
+                            9f
+                        ),
+                        SpeedRecord(
+                            Date().time - 2 * 60 * 1000,
+                            SpeedRecord.Status.Success.toInt(),
+                            2382,
+                            10f,
+                            10f
+                        ),
+                        SpeedRecord(
+                            Date().time - 5 * 60 * 1000,
+                            SpeedRecord.Status.Success.toInt(),
+                            2382,
+                            10f,
+                            5f
+                        ),
+                        SpeedRecord(
+                            Date().time - 5 * 60 * 140,
+                            SpeedRecord.Status.Timeout.toInt(),
+                            2382,
+                            10f,
+                            10f
+                        ),
+                        SpeedRecord(
+                            Date().time - 5 * 60 * 1000,
+                            SpeedRecord.Status.Success.toInt(),
+                            2382,
+                            10f,
+                            10f
+                        ),
+                        SpeedRecord(
+                            Date().time - 5 * 60 * 1500,
+                            SpeedRecord.Status.Success.toInt(),
+                            2382,
+                            10f,
+                            3f
+                        ),
+                        SpeedRecord(
+                            Date().time - 5 * 60 * 1100,
+                            SpeedRecord.Status.Success.toInt(),
+                            2382,
+                            10f,
+                            7f
+                        ),
                     ),
                     modifier = Modifier.padding(10.dp)
                 )

@@ -51,23 +51,24 @@ sealed class NumberUnitPower(
         NumberUnitPower(shortName, longName, power, NumberUnitSystem.Metric) {
 
         companion object {
-            val entries = listOf(
-                Pico,
-                Nano,
-                Micro,
-                Milli,
-                Centi,
-                Deci,
-                Base,
-                Kilo,
-                Mega,
-                Giga,
-                Tera,
-                Peta,
-                Exa,
-                Zetta,
-                Yotta
-            )
+            val entries
+                get() = listOf(
+                    Pico,
+                    Nano,
+                    Micro,
+                    Milli,
+                    Centi,
+                    Deci,
+                    Base,
+                    Kilo,
+                    Mega,
+                    Giga,
+                    Tera,
+                    Peta,
+                    Exa,
+                    Zetta,
+                    Yotta
+                )
 
             /** Returns the entry with the given [longName], or null if not found */
             fun fromLongName(longName: String): Metric? =
@@ -111,7 +112,7 @@ sealed class NumberUnitPower(
         NumberUnitPower(shortName, longName, power, NumberUnitSystem.Binary) {
 
         companion object {
-            val entries = listOf(Base, Kibi, Mebi, Gibi, Tebi, Pebi, Exbi, Zebi, Yobi)
+            val entries get() = listOf(Base, Kibi, Mebi, Gibi, Tebi, Pebi, Exbi, Zebi, Yobi)
 
             /** Returns the entry with the given [longName], or null if not found */
             fun fromLongName(longName: String): Binary? =

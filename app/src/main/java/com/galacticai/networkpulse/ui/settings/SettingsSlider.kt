@@ -32,17 +32,17 @@ class SettingsSlider<T : Number>(
     val range: ClosedFloatingPointRange<Float>,
     val steps: Int = 0,
     val setting: Setting<T>,
-    val valueTextStart: (Float, range: ClosedFloatingPointRange<Float>) -> String,
-    val valueTextEnd: (Float, range: ClosedFloatingPointRange<Float>) -> String,
+    val valueTextStart: (Float, range: ClosedFloatingPointRange<Float>) -> String = { v, _ -> v.toString() },
+    val valueTextEnd: (Float, range: ClosedFloatingPointRange<Float>) -> String = { v, r -> "$v/${r.endInclusive}" },
     val valueTextStartWidth: Dp? = null,
     val valueTextEndWidth: Dp? = null,
-    val onFinishedValue: (Float) -> Unit,
+    val onFinishedValue: ((Float) -> Unit)? = null,
 ) : SettingsItem(title, subtitle, grouped, {
     resetDialog(it, title) { _, _ ->
         val job = Job()
         CoroutineScope(Dispatchers.IO + job).launch {
             setting.restoreDefault(it)
-            onFinishedValue(setting.defaultValue.toFloat())
+            onFinishedValue?.invoke(setting.defaultValue.toFloat())
             job.complete()
         }
     }
@@ -77,7 +77,7 @@ class SettingsSlider<T : Number>(
                     Log.d("SettingsSlider set", "$value")
                     job.complete()
                 }
-                onFinishedValue(value.toFloat())
+                onFinishedValue?.invoke(value.toFloat())
             })
         val textEnd = valueTextEnd(value.toFloat(), range)
         Text(

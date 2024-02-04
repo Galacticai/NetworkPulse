@@ -55,7 +55,7 @@ android {
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.activity:activity-compose:1.8.2")
-    implementation("androidx.compose.foundation:foundation:1.5.4")
+    implementation("androidx.compose.foundation:foundation:1.6.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("com.google.android.material:material:1.11.0")
@@ -70,14 +70,15 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("androidx.fragment:fragment-ktx:1.6.2")
     implementation("androidx.preference:preference-ktx:1.2.1")
-    implementation("androidx.databinding:databinding-runtime:8.2.1")
-    implementation("androidx.compose.ui:ui-tooling-preview-android:1.5.4")
+    implementation("androidx.databinding:databinding-runtime:8.2.2")
+    implementation("androidx.compose.ui:ui-tooling-preview-android:1.6.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     implementation("com.google.accompanist:accompanist-permissions:0.32.0")
-    implementation("androidx.compose.ui:ui-text-google-fonts:1.5.4")
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.6.0")
     implementation("com.github.Breens-Mbaka:Searchable-Dropdown-Menu-Jetpack-Compose:0.2.8")
+    implementation("com.github.GIGAMOLE:ComposeFadingEdges:1.0.4")
 
     implementation("org.greenrobot:eventbus:3.3.1")
 
@@ -85,7 +86,7 @@ dependencies {
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
     implementation("androidx.room:room-runtime:2.6.1")
-    debugImplementation("androidx.compose.ui:ui-tooling:1.5.4")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.6.0")
     ksp("androidx.room:room-compiler:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
 

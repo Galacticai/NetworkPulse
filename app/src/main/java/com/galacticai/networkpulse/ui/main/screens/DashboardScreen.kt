@@ -21,12 +21,12 @@ import com.galacticai.networkpulse.ui.main.RecordsList
 
 @Composable
 fun DashboardScreen(mainActivity: MainActivity) {
-    fun getAll() = mainActivity.getAllValuesFromDB().reversed()
-    var all by remember { mutableStateOf(getAll()) }
+    val records = mainActivity.getAllValuesFromDB().reversed()
+    var all by remember { mutableStateOf(records) }
 
     Column {
         TopBar(stringResource(R.string.dashboard)) {
-            IconButton(onClick = { all = getAll() }) {
+            IconButton(onClick = { all = mainActivity.getAllValuesFromDB().reversed() }) {
                 Icon(
                     imageVector = Icons.Rounded.Refresh,
                     contentDescription = stringResource(R.string.refresh)

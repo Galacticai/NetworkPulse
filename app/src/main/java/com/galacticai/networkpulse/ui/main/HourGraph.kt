@@ -23,9 +23,9 @@ import com.galacticai.networkpulse.models.settings.Setting
 @Composable
 fun HourGraph(data: CubicChartData) {
     val ctx = LocalContext.current
-    var graphWidth by remember { mutableIntStateOf(Setting.GraphWidth.defaultValue) }
+    var graphWidth by remember { mutableIntStateOf(Setting.GraphSize.defaultValue) }
     LaunchedEffect(Unit) {
-        graphWidth = Setting.GraphWidth.get(ctx)
+        graphWidth = Setting.GraphSize.get(ctx)
     }
 
     Surface(
@@ -34,7 +34,9 @@ fun HourGraph(data: CubicChartData) {
         border = BorderStroke(1.dp, colorResource(R.color.primaryContainer)),
     ) {
         CubicChart(
-            modifier = Modifier.padding(5.dp).width((data.items.size * graphWidth).dp),
+            modifier = Modifier
+                .padding(5.dp)
+                .width((data.items.size * graphWidth).dp),
             data = data,
             height = 300.dp,
             style = defaultChartStyle(LocalContext.current),

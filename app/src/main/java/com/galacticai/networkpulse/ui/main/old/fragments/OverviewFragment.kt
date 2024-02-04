@@ -9,7 +9,7 @@ import androidx.fragment.app.Fragment
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.models.sql.CircularList
 import com.galacticai.networkpulse.databse.LocalDatabase
-import com.galacticai.networkpulse.databse.models.SpeedRecordEntity
+import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.services.PulseService
 import com.github.mikephil.charting.animation.Easing
 import com.github.mikephil.charting.charts.RadarChart
@@ -49,8 +49,8 @@ class OverviewFragment : Fragment() {
     fun onPulseDone(ev: PulseService.DoneEvent) {
         hourChartEntries.add(
             RadarSpeedEntry(
-                RadarEntry(ev.timedSpeedRecord.up),
-                RadarEntry(ev.timedSpeedRecord.down)
+                RadarEntry(ev.timedSpeedRecord.up ?: 0f),
+                RadarEntry(ev.timedSpeedRecord.down ?: 0f)
             )
         )
         updateChart()
@@ -91,7 +91,7 @@ class OverviewFragment : Fragment() {
         val dao = LocalDatabase
             .getDBMainThread(view.context)
             .speedRecordsDAO()
-        dao.insert(SpeedRecordEntity(Date().time, 10f, 20f))
+        dao.insert(SpeedRecord(Date().time, 0, 0, 10f, 20f))
         for (record in dao.getAfter(Date().time - (1000 * 60 * 60))) {
             if (record.up == null || record.down == null)
                 continue
@@ -132,7 +132,7 @@ class OverviewFragment : Fragment() {
         color: Int
     ): RadarDataSet {
         val colorRes = view.context.getColor(color)
-//        val evenList = evenlyPickedList(entries, 60)
+        //        val evenList = evenlyPickedList(entries, 60)
         val set = RadarDataSet(
             entries, //  filledList(evenList, 60, RadarEntry(0f)),
             label

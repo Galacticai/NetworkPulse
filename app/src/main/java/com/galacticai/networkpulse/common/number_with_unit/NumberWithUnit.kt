@@ -3,7 +3,7 @@ package com.galacticai.networkpulse.common.number_with_unit
 import com.galacticai.networkpulse.common.models.Jsonable
 import org.json.JSONObject
 import java.text.DecimalFormat
-import kotlin.math.abs
+import kotlin.math.pow
 
 open class NumberWithUnit(val value: Double, val unit: NumberUnit) : Jsonable {
 
@@ -29,24 +29,14 @@ open class NumberWithUnit(val value: Double, val unit: NumberUnit) : Jsonable {
     /** @return Copy with base unit (using [valueInBaseUnit] and [NumberUnit.base]) */
     fun toBaseUnit(): NumberWithUnit = NumberWithUnit(valueInBaseUnit, unit.base)
 
+    //TODO: fix nearest unit selection (ex: it selects a MiB instead of KiB)
     /** @return Nearest [NumberUnitPower] suitable for [valueInBaseUnit] (ex: 1000 b nearest unit is Kb) */
     fun getNearestPower(
         powers: List<NumberUnitPower> = unit.unitPower.getAll()
-    ): NumberUnitPower {
-
-        if (powers.isEmpty()) throw NoSuchElementException("List is empty.")
-        var nearestUnit = powers[0]
-        var minDifference = Double.MAX_VALUE
-        for (power in powers) {
-            val difference = abs(
-                (valueInBaseUnit * unit.unitPower.baseMultiplier) - power.baseMultiplier
-            )
-            if (difference > minDifference) continue
-            minDifference = difference
-            nearestUnit = power
-        }
-        return nearestUnit
-    }
+    ): NumberUnitPower =
+        powers.minByOrNull {
+            valueInBaseUnit.pow(it.power)
+        } ?: throw NoSuchElementException("List is empty after filtering.")
 
     /** @return Copy with the nearest unit (ex: 1000b -> 1Kb) */
     fun toNearestUnit(powers: List<NumberUnitPower> = unit.unitPower.getAll()): NumberWithUnit {
