@@ -1,4 +1,4 @@
-package com.galacticai.networkpulse.common.ui.dialogs
+package com.galacticai.networkpulse.ui.common
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
@@ -73,7 +73,8 @@ fun DateTimePicker(
                 )
             }
         }
-        CustomTabRow(insetPadding = 5.dp,
+        CustomTabRow(
+            insetPadding = 5.dp,
             containerColor = colorResource(R.color.primaryContainer),
             selectedContainerColor = colorResource(R.color.background),
             items = listOf<@Composable (Boolean) -> Unit>(
@@ -100,7 +101,9 @@ fun DateTimePicker(
 
         Spacer(modifier = Modifier.height(10.dp))
         Row(
-            modifier = Modifier.fillMaxWidth().padding(20.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
             horizontalArrangement = Arrangement.End
         ) {
             TextButton(onClick = onDismissRequest) {
