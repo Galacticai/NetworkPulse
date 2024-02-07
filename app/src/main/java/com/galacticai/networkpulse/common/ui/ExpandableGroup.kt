@@ -6,8 +6,9 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,16 +31,37 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.galacticai.networkpulse.R
-import com.gigamole.composefadingedges.content.FadingEdgesContentType
-import com.gigamole.composefadingedges.fill.FadingEdgesFillType
-import com.gigamole.composefadingedges.verticalFadingEdges
+
+
+@Composable
+fun ExpandableItem(
+    title: String,
+    withDivider: Boolean = true,
+    radius: Dp = 20.dp,
+    padding: Dp = 20.dp,
+    expandedHeight: Dp? = null,
+    expandedFontWeight: FontWeight = FontWeight.W100,
+    collapsedFontWeight: FontWeight = FontWeight.W900,
+    bgColor: Color = MaterialTheme.colorScheme.background,
+    surfaceColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    content: @Composable (itemPadding: PaddingValues) -> Unit
+) {
+    ExpandableGroup(
+        title,
+        withDivider,
+        radius, padding,
+        expandedHeight, expandedFontWeight,
+        collapsedFontWeight,
+        bgColor, surfaceColor,
+        listOf(content),
+    )
+}
 
 @Composable
 fun ExpandableGroup(
@@ -49,22 +72,22 @@ fun ExpandableGroup(
     expandedHeight: Dp? = null,
     expandedFontWeight: FontWeight = FontWeight.W100,
     collapsedFontWeight: FontWeight = FontWeight.W900,
-    vararg items: @Composable () -> Unit
+    bgColor: Color = MaterialTheme.colorScheme.background,
+    surfaceColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    items: List<@Composable (itemPadding: PaddingValues) -> Unit>
 ) {
     var expanded by rememberSaveable { mutableStateOf(true) }
-
     val roundedCorner = RoundedCornerShape(radius)
-    val primaryContainer = colorResource(R.color.primaryContainer)
 
     Surface(
-        color = primaryContainer,
+        color = surfaceColor,
         shape = roundedCorner,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column {
             Surface(
                 onClick = { expanded = !expanded },
-                color = primaryContainer,
+                color = surfaceColor,
                 shape = roundedCorner,
             ) {
                 AnimatedContent(
@@ -99,7 +122,7 @@ fun ExpandableGroup(
             }
 
             Surface(
-                color = colorResource(R.color.background),
+                color = bgColor,
                 shape = roundedCorner,
                 modifier = Modifier.padding(
                     bottom = 2.dp,
@@ -107,44 +130,50 @@ fun ExpandableGroup(
                     end = 2.dp
                 ),
             ) {
+                if (items.isEmpty()) return@Surface
+
                 AnimatedVisibility(
                     visible = expanded,
                     enter = expandVertically(),
                 ) {
                     @Composable
-                    fun content(i: Int, item: @Composable () -> Unit) {
+                    fun content(
+                        i: Int,
+                        itemView: @Composable (itemPadding: PaddingValues) -> Unit,
+                        itemPadding: PaddingValues
+                    ) {
                         if (withDivider && i > 0 && i < items.size) {
                             Divider(
-                                modifier = Modifier.padding(vertical = padding / 2),
-                                color = colorResource(R.color.primaryContainer)
+                                modifier = Modifier.padding(horizontal = padding),
+                                color = surfaceColor
                             )
                         }
-                        item()
+                        itemView(itemPadding)
                     }
 
-                    if (expandedHeight == null) {
-                        Column(modifier = Modifier.padding(padding)) {
-                            for ((i, item) in items.withIndex())
-                                content(i, item)
+                    fun itemPadding(i: Int) = PaddingValues(
+                        start = padding, end = padding,
+                        top = if (i == 0) padding else padding / 2,
+                        bottom = if (i == items.lastIndex) padding else padding / 2
+                    )
+
+                    if (items.size == 1) {
+                        Box(
+                            modifier = if (expandedHeight == null) Modifier
+                            else Modifier.height(expandedHeight)
+                        ) {
+                            content(0, items[0], itemPadding(0))
                         }
                     } else {
-                        //                        FadingScrollView(
-                        //                            Orientation.Vertical,
-                        //                            length = 10.dp,
-                        //                            modifier = Modifier
-                        //                                .padding(padding)
-                        //                                .height(expandedHeight),
-                        //                        ) {
-                        //                            for ((i, item) in items.withIndex())
-                        //                                content(i, item)
-                        //                        }
-                        LazyColumn(
-                            modifier = Modifier
-                                .padding(padding)
-                                .height(expandedHeight)
-                        ) {
-                            items.forEachIndexed { i, item ->
-                                item { content(i, item) }
+                        if (expandedHeight == null) {
+                            Column {
+                                for ((i, itemView) in items.withIndex())
+                                    content(i, itemView, itemPadding(i))
+                            }
+                        } else {
+                            LazyColumn(modifier = Modifier.height(expandedHeight)) {
+                                for ((i, itemView) in items.withIndex())
+                                    item { content(i, itemView, itemPadding(i)) }
                             }
                         }
                     }
@@ -164,7 +193,7 @@ fun PreviewExpandableGroup() {
     ) {
         ExpandableGroup(
             title = "Title", expandedHeight = 100.dp,
-            items = arrayOf(
+            items = listOf(
                 { Text("Item 1") },
                 { Text("Item 2") },
                 { Text("Item 3") },
@@ -175,7 +204,7 @@ fun PreviewExpandableGroup() {
         Spacer(modifier = Modifier.height(10.dp))
         ExpandableGroup(
             title = "Title",
-            items = arrayOf(
+            items = listOf(
                 { Text("Item 1") },
                 { Text("Item 2") },
                 { Text("Item 3") },

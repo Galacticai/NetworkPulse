@@ -54,6 +54,7 @@ fun <T> CustomDropdownMenu(
                 shape = RoundedCornerShape(radius)
             )
             .then(modifier),
+        shape = RoundedCornerShape(radius),
         onClick = { expanded = !expanded }
     ) {
         Row(

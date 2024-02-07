@@ -196,7 +196,13 @@ class PulseService : Service() {
 
     private fun onTimeoutListener(timestamp: Long, timeout: Duration, startTime: Date) {
         val record =
-            SpeedRecord(timestamp, SpeedRecord.Status.Timeout.toInt())
+            SpeedRecord(
+                timestamp,
+                SpeedRecord.Status.Timeout.toInt(),
+                timeout.toMillis().toInt(),
+                null,
+                null
+            )
         LocalDatabase.getDB(this).apply {
             speedRecordsDAO().insert(record)
         }.close()
@@ -213,7 +219,7 @@ class PulseService : Service() {
         //? the rest are accidental and should be fixed
         if (error !is IOException) throw error
 
-        val record = SpeedRecord(timestamp, SpeedRecord.Status.Error.toInt())
+        val record = SpeedRecord.Error(timestamp, runtime.toMillis().toInt())
         LocalDatabase.getDB(this).apply {
             speedRecordsDAO().insert(record)
         }.close()
@@ -233,9 +239,8 @@ class PulseService : Service() {
     }
 
     private fun onResponseOk(timestamp: Long, response: Response, runtime: Duration) {
-        val record = SpeedRecord(
+        val record = SpeedRecord.Success(
             timestamp,
-            SpeedRecord.Status.Success.toInt(),
             runtime.toMillis().toInt(),
             0f,
             SpeedRecord.getDownSpeed(response, runtime.toMillis().toInt())
@@ -251,12 +256,8 @@ class PulseService : Service() {
     private fun onResponseOther(timestamp: Long, response: Response?, runtime: Duration) {
         val runtimeMS = runtime.toMillis().toInt()
         val record: SpeedRecord =
-            if (response == null) SpeedRecord(
-                timestamp, 0, runtimeMS, null, null
-            ) else SpeedRecord(
-                timestamp, response.code, runtimeMS, 0f,
-                SpeedRecord.getDownSpeed(response, runtimeMS)
-            )
+            if (response == null) SpeedRecord(timestamp, 0, runtimeMS, null, null)
+            else SpeedRecord(timestamp, response.code, runtimeMS, 0f, 0f)
 
         LocalDatabase.getDB(this).apply {
             speedRecordsDAO().insert(record)

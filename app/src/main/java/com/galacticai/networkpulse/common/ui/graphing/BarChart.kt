@@ -1,5 +1,7 @@
 package com.galacticai.networkpulse.common.ui.graphing
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +17,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.rounded.KeyboardArrowRight
 import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,13 +40,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
-import androidx.compose.ui.unit.min
 import com.galacticai.networkpulse.R
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Range
 
 
@@ -60,13 +69,12 @@ fun <T> BarChart(
     val range = min..max
 
     val rowState = rememberLazyListState()
+    suspend fun scrollToEnd() = rowState.scrollToItem(rowState.layoutInfo.totalItemsCount - 1)
     if (startAsScrolledToEnd) {
         LaunchedEffect(rowState) {
-            if (rowState.layoutInfo.totalItemsCount > 0)
-                rowState.scrollToItem(rowState.layoutInfo.totalItemsCount - 1)
+            if (rowState.layoutInfo.totalItemsCount > 0) scrollToEnd()
         }
     }
-
     var scaleValuesWidth by remember { mutableStateOf(0.dp) }
 
     @Composable
@@ -145,20 +153,48 @@ fun <T> BarChart(
         }
     }
 
+    @Composable
+    fun scrollToEndButton(modifier: Modifier) {
+        val can = rowState.canScrollForward
+        AnimatedVisibility(
+            modifier = modifier,
+            visible = can
+        ) {
+            val direction = LocalLayoutDirection.current
+            IconButton(
+                onClick = {
+                    if (!can) return@IconButton // ignore while animating
+                    MainScope().launch { scrollToEnd() }
+                },
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = colorResource(R.color.secondaryContainer),
+                    contentColor = colorResource(R.color.secondary)
+                )
+            ) {
+                Icon(
+                    imageVector = if (direction == LayoutDirection.Ltr)
+                        Icons.Rounded.KeyboardArrowRight
+                    else Icons.Rounded.KeyboardArrowLeft,
+                    contentDescription = null,
+                    modifier = Modifier.padding(horizontal = 10.dp),
+                )
+            }
+        }
+    }
 
     @Composable
     fun bars() {
         fun calcBarHeight(value: Float): Dp {
-            return max(
-                barStyle.heightMax * (value / max),
-                min(
-                    barStyle.radius,
-                    min(
-                        barStyle.heightMax / 100,
-                        5.dp
-                    )
-                )
-            )
+            // return max(
+            return barStyle.heightMax * (value / max) //,
+            //                min(
+            //                    barStyle.radius,
+            //                    min(
+            //                        barStyle.heightMax / 100,
+            //                        5.dp
+            //                    )
+            //                )
+            //            )
         }
 
         val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
@@ -212,21 +248,23 @@ fun <T> BarChart(
                         }
                     }
                 }
+                item { Spacer(modifier = Modifier.width(barStyle.width / 4)) }
             }
         }
     }
 
 
-    Surface(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(barStyle.heightMax)
+            .background(bgColor)
             .then(modifier),
-        color = bgColor,
     ) {
         scaleLines()
         bars()
         scaleValues()
+        scrollToEndButton(Modifier.align(Alignment.CenterEnd))
     }
 }
 

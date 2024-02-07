@@ -8,23 +8,32 @@ import okhttp3.Response
 private const val tableName_ = "logs"
 
 @Entity(tableName = tableName_)
-data class SpeedRecord(
+open class SpeedRecord(
     @PrimaryKey
     @ColumnInfo(name = timeColumn)
     val time: Long,
     @ColumnInfo(name = statusColumn)
     val status: Int,
     @ColumnInfo(name = runtimeMSColumn)
-    val runtimeMS: Int? = null,
+    val runtimeMS: Int,
     @ColumnInfo(name = upColumn)
-    val up: Float? = null,
+    val up: Float?,
     @ColumnInfo(name = downColumn)
-    val down: Float? = null,
+    val down: Float?,
 ) {
     val isSuccess get() = Status.isSuccess(status)
     val isTimeout get() = Status.isTimeout(status)
     val isError get() = Status.isError(status)
     val isOther get() = !(isSuccess || isTimeout || isError)
+
+    class Success(time: Long, runtimeMS: Int, up: Float, down: Float) :
+        SpeedRecord(time, Status.Success.toInt(), runtimeMS, up, down)
+
+    class Timeout(time: Long, runtimeMS: Int) :
+        SpeedRecord(time, Status.Timeout.toInt(), runtimeMS, null, null)
+
+    class Error(time: Long, runtimeMS: Int) :
+        SpeedRecord(time, Status.Error.toInt(), runtimeMS, null, null)
 
     companion object {
         const val tableName = tableName_
@@ -38,10 +47,10 @@ data class SpeedRecord(
             (response.body?.string()?.length?.toFloat() ?: 0f) / runtimeMS
     }
 
-    enum class Status {
-        Success, Timeout, Error;
+    enum class Status(val value: Int) {
+        Success(1), Timeout(2), Error(3);
 
-        fun toInt() = ordinal
+        fun toInt() = value
         override fun toString() = toInt().toString()
 
         companion object {

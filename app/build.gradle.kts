@@ -14,8 +14,8 @@ android {
         applicationId = "com.galacticai.networkpulse"
         minSdk = 26
         targetSdk = 33
-        versionCode = 1
-        versionName = "0.1.0-beta"
+        versionCode = 3
+        versionName = "0.3-beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -79,27 +79,22 @@ dependencies {
     implementation("androidx.compose.ui:ui-text-google-fonts:1.6.0")
     implementation("com.github.Breens-Mbaka:Searchable-Dropdown-Menu-Jetpack-Compose:0.2.8")
     implementation("com.github.GIGAMOLE:ComposeFadingEdges:1.0.4")
-
+    implementation("com.github.Gurupreet:FontAwesomeCompose:1.1.0")
     implementation("org.greenrobot:eventbus:3.3.1")
-
     implementation("com.himanshoe:charty:1.0.0")
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
-
     implementation("androidx.room:room-runtime:2.6.1")
     debugImplementation("androidx.compose.ui:ui-tooling:1.6.0")
     ksp("androidx.room:room-compiler:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
-
     implementation("com.github.jaikeerthick:Composable-Graphs:v1.2.2")
-
-
-    //    implementation("com.github.JahidHasanCO:NetworkUsage:1.0.1")
-    //    implementation("com.github.oatrice:internet-speed-testing:1.0.1")
-    //    implementation("fr.bmartel:jspeedtest:1.32.1")
-
     implementation(platform("com.squareup.okhttp3:okhttp-bom:4.12.0"))
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor")
+    implementation("io.github.vanpra.compose-material-dialogs:datetime:0.7.1")
+    //    implementation("com.github.JahidHasanCO:NetworkUsage:1.0.1")
+    //    implementation("com.github.oatrice:internet-speed-testing:1.0.1")
+    //    implementation("fr.bmartel:jspeedtest:1.32.1")
 }
 
 

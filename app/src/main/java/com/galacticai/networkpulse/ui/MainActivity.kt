@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
 
     val dao get() = LocalDatabase.getDBMainThread(this).speedRecordsDAO()
     fun getChartValuesFromDB(): List<SpeedRecord> =
-        dao.getAfter(chartAfterTime)
+        dao.getBetween(chartAfterTime, System.currentTimeMillis())
 
     fun getAllValuesFromDB(): List<SpeedRecord> =
         dao.getAll()

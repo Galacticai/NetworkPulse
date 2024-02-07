@@ -30,5 +30,5 @@ data class NumberUnit(
     /** The base unit of this (with [unitPower] set to [NumberUnitPower.base]) */
     val base get() = if (isBaseUnit) this else NumberUnit(unitPower.base, unitBase)
 
-    val isBaseUnit get() = unitBase.isBaseUnit && unitPower.power == 0
+    val isBaseUnit get() = unitBase.isBaseUnit && unitPower.exponent == 0
 }

@@ -2,39 +2,43 @@ package com.galacticai.networkpulse.common
 
 import kotlin.time.Duration
 
-fun Duration.format(abbreviated: Boolean = false, joint: String = ", "): String {
-    val months = (inWholeDays / 30).toInt()
-    val days = (inWholeDays % 30).toInt()
-    val hours = (inWholeHours % 24).toInt()
-    val minutes = (inWholeMinutes % 60).toInt()
-    val seconds = (inWholeSeconds % 60).toInt()
-
-    val parts = mutableListOf<String>()
-
-    if (months > 0) {
-        val suffix = if (abbreviated) "mo" else " month${if (months > 1) "s" else ""}"
-        parts.add("$months$suffix")
-    }
-
-    if (days > 0) {
-        val suffix = if (abbreviated) "d" else " day${if (days > 1) "s" else ""}"
-        parts.add("$days$suffix")
-    }
-
-    if (hours > 0) {
-        val suffix = if (abbreviated) "h" else " hour${if (hours > 1) "s" else ""}"
-        parts.add("$hours$suffix")
-    }
-
-    if (minutes > 0) {
-        val suffix = if (abbreviated) "m" else " minute${if (minutes > 1) "s" else ""}"
-        parts.add("$minutes$suffix")
-    }
-
-    if (seconds > 0) {
-        val suffix = if (abbreviated) "s" else " second${if (seconds > 1) "s" else ""}"
-        parts.add("$seconds$suffix")
-    }
-
-    return parts.joinToString(joint)
+open class DurationFormatSuffixes(
+    val months: String,
+    val days: String,
+    val hours: String,
+    val minutes: String,
+    val seconds: String,
+    val milliseconds: String,
+) {
+    data object Default : DurationFormatSuffixes(
+        months = "mo",
+        days = "d",
+        hours = "h",
+        minutes = "m",
+        seconds = "s",
+        milliseconds = "ms",
+    )
 }
+
+fun Duration.format(
+    suffixes: DurationFormatSuffixes = DurationFormatSuffixes.Default,
+    joint: String = ", ",
+    /** Max number of parts to return
+     *
+     * Example:
+     * - 2 parts would return "2d, 1h"
+     * - 3 parts would return "2d, 1h, 1m"*/
+    partsCount: Int = Int.MAX_VALUE,
+): String = listOf(
+    inWholeDays / 30 to suffixes.months,
+    inWholeDays % 30 to suffixes.days,
+    inWholeHours % 24 to suffixes.hours,
+    inWholeMinutes % 60 to suffixes.minutes,
+    inWholeSeconds % 60 to suffixes.seconds,
+    inWholeMilliseconds % 1000 to suffixes.milliseconds
+)
+    .filter { it.first > 0 }
+    .take(partsCount)
+    .joinToString(joint) {
+        "${it.first}${it.second}"
+    }

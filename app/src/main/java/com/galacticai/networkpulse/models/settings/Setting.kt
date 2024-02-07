@@ -73,6 +73,11 @@ sealed class Setting<T>(
         defaultValue = 35
     )
 
+    data object Summarize : Setting<Boolean>(
+        keyName = "Summarize",
+        defaultValue = true
+    )
+
     data object DownloadSize : SettingsObject<com.galacticai.networkpulse.models.DownloadSize>(
         keyName = "DownloadSize",
         defaultObject = com.galacticai.networkpulse.models.DownloadSize.Size10K

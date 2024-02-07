@@ -21,13 +21,13 @@
     <color name="onSurface">@color/galactic_blue_50</color>
 
     <!-- Other Colors -->
-    <color name="error">#ffbac7</color>
-    <color name="onError">#b00020</color>
+    <color name="error">#B71C1C</color>
+    <color name="onError">#EF9A9A</color>
     <color name="errorContainer">#36000a</color>
     <color name="onErrorContainer">#ffbac7</color>
 
-    <color name="success">#e6ee9c</color>
-    <color name="onSuccess">#33691e</color>
+    <color name="success">#1B5E20</color>
+    <color name="onSuccess">#A5D6A7</color>
 
     <color name="warning">#ffe082</color>
     <color name="onWarning">#903F00</color>

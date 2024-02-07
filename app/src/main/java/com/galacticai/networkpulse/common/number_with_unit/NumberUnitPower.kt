@@ -7,14 +7,14 @@ import kotlin.math.pow
 sealed class NumberUnitPower(
     val shortName: String,
     val longName: String,
-    val power: Int,
+    val exponent: Int,
     val unitSystem: NumberUnitSystem,
 ) : Jsonable {
-    override fun toString(): String = longName
+    override fun toString(): String = shortName
     abstract fun getAll(): List<NumberUnitPower>
 
     /** The amount a value should be multiplied by to get the value in the base unit */
-    val baseMultiplier get() = unitSystem.multiplier.pow(power)
+    val baseMultiplier get() = unitSystem.multiplier.pow(exponent)
 
     val base: NumberUnitPower
         get() = when (unitSystem) {
@@ -27,7 +27,7 @@ sealed class NumberUnitPower(
         JSONObject().apply {
             put("shortName", shortName)
             put("longName", longName)
-            put("power", power)
+            put("power", exponent)
             put("unitSystem", unitSystem.toJson())
         }
 
@@ -47,8 +47,8 @@ sealed class NumberUnitPower(
     }
 
 
-    open class Metric(shortName: String, longName: String, power: Int) :
-        NumberUnitPower(shortName, longName, power, NumberUnitSystem.Metric) {
+    open class Metric(shortName: String, longName: String, exponent: Int) :
+        NumberUnitPower(shortName, longName, exponent, NumberUnitSystem.Metric) {
 
         companion object {
             val entries
@@ -57,8 +57,8 @@ sealed class NumberUnitPower(
                     Nano,
                     Micro,
                     Milli,
-                    Centi,
-                    Deci,
+                    //                    Centi,
+                    //                    Deci,
                     Base,
                     Kilo,
                     Mega,
@@ -93,23 +93,21 @@ sealed class NumberUnitPower(
         data object Nano : Metric("n", "Nano", -9)
         data object Micro : Metric("μ", "Micro", -6)
         data object Milli : Metric("m", "Milli", -3)
-        data object Centi : Metric("c", "Centi", -2)
-        data object Deci : Metric("d", "Deci", -1)
 
         data object Base : Metric("", "", 0)
 
-        data object Kilo : Metric("K", "Kilo", 1)
-        data object Mega : Metric("M", "Mega", 2)
-        data object Giga : Metric("G", "Giga", 3)
-        data object Tera : Metric("T", "Tera", 4)
-        data object Peta : Metric("P", "Peta", 5)
-        data object Exa : Metric("E", "Exa", 6)
-        data object Zetta : Metric("Z", "Zetta", 7)
-        data object Yotta : Metric("Y", "Yotta", 8)
+        data object Kilo : Metric("K", "Kilo", 3)
+        data object Mega : Metric("M", "Mega", 6)
+        data object Giga : Metric("G", "Giga", 9)
+        data object Tera : Metric("T", "Tera", 12)
+        data object Peta : Metric("P", "Peta", 15)
+        data object Exa : Metric("E", "Exa", 18)
+        data object Zetta : Metric("Z", "Zetta", 21)
+        data object Yotta : Metric("Y", "Yotta", 24)
     }
 
-    open class Binary(shortName: String, longName: String, power: Int) :
-        NumberUnitPower(shortName, longName, power, NumberUnitSystem.Binary) {
+    open class Binary(shortName: String, longName: String, exponent: Int) :
+        NumberUnitPower(shortName, longName, exponent, NumberUnitSystem.Binary) {
 
         companion object {
             val entries get() = listOf(Base, Kibi, Mebi, Gibi, Tebi, Pebi, Exbi, Zebi, Yobi)
@@ -134,13 +132,13 @@ sealed class NumberUnitPower(
 
 
         data object Base : Binary("", "", 0)
-        data object Kibi : Binary("Ki", "Kibi", 1)
-        data object Mebi : Binary("Mi", "Mebi", 2)
-        data object Gibi : Binary("Gi", "Gibi", 3)
-        data object Tebi : Binary("Ti", "Tebi", 4)
-        data object Pebi : Binary("Pi", "Pebi", 5)
-        data object Exbi : Binary("Ei", "Exbi", 6)
-        data object Zebi : Binary("Zi", "Zebi", 7)
-        data object Yobi : Binary("Yi", "Yobi", 8)
+        data object Kibi : Binary("Ki", "Kibi", 3)
+        data object Mebi : Binary("Mi", "Mebi", 6)
+        data object Gibi : Binary("Gi", "Gibi", 9)
+        data object Tebi : Binary("Ti", "Tebi", 12)
+        data object Pebi : Binary("Pi", "Pebi", 15)
+        data object Exbi : Binary("Ei", "Exbi", 18)
+        data object Zebi : Binary("Zi", "Zebi", 21)
+        data object Yobi : Binary("Yi", "Yobi", 24)
     }
 }

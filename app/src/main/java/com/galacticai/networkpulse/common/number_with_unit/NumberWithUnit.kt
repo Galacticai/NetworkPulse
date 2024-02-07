@@ -3,6 +3,8 @@ package com.galacticai.networkpulse.common.number_with_unit
 import com.galacticai.networkpulse.common.models.Jsonable
 import org.json.JSONObject
 import java.text.DecimalFormat
+import kotlin.math.abs
+import kotlin.math.log10
 import kotlin.math.pow
 
 open class NumberWithUnit(val value: Double, val unit: NumberUnit) : Jsonable {
@@ -33,10 +35,22 @@ open class NumberWithUnit(val value: Double, val unit: NumberUnit) : Jsonable {
     /** @return Nearest [NumberUnitPower] suitable for [valueInBaseUnit] (ex: 1000 b nearest unit is Kb) */
     fun getNearestPower(
         powers: List<NumberUnitPower> = unit.unitPower.getAll()
-    ): NumberUnitPower =
-        powers.minByOrNull {
-            valueInBaseUnit.pow(it.power)
-        } ?: throw NoSuchElementException("List is empty after filtering.")
+    ): NumberUnitPower {
+        var closestPower = powers.first()
+        var minDifference = Double.MAX_VALUE
+        for (power in powers) {
+            val difference = abs(log10(value) - log10(10.0.pow(power.exponent)))
+            if (difference < minDifference) {
+                minDifference = difference
+                closestPower = power
+            }
+        }
+        return closestPower
+    }
+    //    =
+    //        powers.minByOrNull {
+    //            valueInBaseUnit.pow(it.exponent)
+    //        } ?: throw NoSuchElementException("List is empty after filtering.")
 
     /** @return Copy with the nearest unit (ex: 1000b -> 1Kb) */
     fun toNearestUnit(powers: List<NumberUnitPower> = unit.unitPower.getAll()): NumberWithUnit {

@@ -92,7 +92,7 @@ class OverviewFragment : Fragment() {
             .getDBMainThread(view.context)
             .speedRecordsDAO()
         dao.insert(SpeedRecord(Date().time, 0, 0, 10f, 20f))
-        for (record in dao.getAfter(Date().time - (1000 * 60 * 60))) {
+        for (record in dao.getBetween(Date().time - (1000 * 60 * 60), System.currentTimeMillis())) {
             if (record.up == null || record.down == null)
                 continue
             hourChartEntries.add(

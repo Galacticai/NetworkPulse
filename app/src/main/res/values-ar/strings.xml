@@ -51,5 +51,30 @@
     <string name="data_usage_setting_title">استخدام البيانات</string>
     <string name="data_usage_setting_description">مقدار البيانات التي سيتم استخدامها كل يوم مع الإعدادات الحالية</string>
     <string name="day">يوم</string>
-
+    <string name="summarize_setting_title">الملخص</string>
+    <string name="summarize_setting_description">إظهار ملخص البيانات قبل إظهار التفاصيل.\n- موصى به للغاية لأداء عالي</string>
+    <string name="summary">الملخص</string>
+    <string name="details">التفاصيل</string>
+    <string name="total">المجموع</string>
+    <string name="success">النجاح</string>
+    <string name="fail">الفشل</string>
+    <string name="average_download">متوسط التنزيل</string>
+    <string name="average_time">متوسط الوقت</string>
+    <string name="longest_success_streak">أطول مدة للنجاح</string>
+    <string name="longest_failure_streak">أطول مدة للفشل</string>
+    <string name="month_suffix">ش</string>
+    <string name="day_suffix">ي</string>
+    <string name="hour_suffix">س</string>
+    <string name="minute_suffix">د</string>
+    <string name="second_suffix">ث</string>
+    <string name="millisecond_suffix">مث</string>
+    <string name="comma">،</string>
+    <string name="calculating">يتم الحساب…</string>
+    <string name="cancel">الغاء</string>
+    <string name="select">اختيار</string>
+    <string name="to">الى</string>
+    <string name="from">من</string>
+    <string name="date">التاريخ</string>
+    <string name="time">الوقت</string>
+    <string name="time_range">المدى الزمني</string>
 </resources>

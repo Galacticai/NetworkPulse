@@ -11,10 +11,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -22,17 +26,21 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.galacticai.networkpulse.R
+import com.galacticai.networkpulse.common.await
 import com.galacticai.networkpulse.common.openURL
 import com.galacticai.networkpulse.common.restartApp
 import com.galacticai.networkpulse.common.ui.CustomDropdownMenu
@@ -46,10 +54,6 @@ import com.galacticai.networkpulse.ui.dialogs.resetDialog
 import com.galacticai.networkpulse.ui.settings.SettingsGroup
 import com.galacticai.networkpulse.ui.settings.SettingsItem
 import com.galacticai.networkpulse.ui.settings.SettingsSlider
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 
 
 const val SETTINGS = "settings"
@@ -64,11 +68,7 @@ fun SettingsScreen(mainActivity: MainActivity?) {
         TopBar(title) {
             IconButton(onClick = {
                 resetDialog(ctx, title) { _, _ ->
-                    val job = Job()
-                    CoroutineScope(Dispatchers.IO + job).launch {
-                        Setting.restoreAll(ctx)
-                        job.complete()
-                    }
+                    await { Setting.restoreAll(ctx) }
                     restartApp(ctx as MainActivity, PrepareActivity::class.java)
                 }
             }) {
@@ -86,26 +86,33 @@ fun SettingsScreen(mainActivity: MainActivity?) {
             item {
                 SettingsGroup(
                     title = stringResource(R.string.title_pulse),
-                    itemPulseInterval(ctx),
-                    itemDownloadSize(ctx),
-                    itemDownloadPerDay(ctx)
+                    items = listOf(
+                        itemPulseInterval(ctx),
+                        itemDownloadSize(ctx),
+                        itemDownloadPerDay(ctx),
+                    )
                 ).Content()
             }
             spacer()
             item {
                 SettingsGroup(
                     title = stringResource(R.string.display),
-                    itemGraphSize(ctx),
+                    items = listOf(
+                        itemGraphSize(ctx),
+                        itemShowSummary(ctx),
+                    )
                 ).Content()
             }
             spacer()
             item {
                 SettingsGroup(
                     title = stringResource(R.string.about_app),
-                    itemVersion(ctx),
-                    itemSourceCode(ctx),
-                    itemCopyright(ctx),
-                    itemLicense(ctx),
+                    items = listOf(
+                        itemVersion(ctx),
+                        itemSourceCode(ctx),
+                        itemCopyright(ctx),
+                        itemLicense(ctx),
+                    )
                 ).Content()
             }
         }
@@ -142,11 +149,7 @@ private fun itemDownloadSize(context: Context): SettingsItem {
         subtitle = context.getString(R.string.download_size_setting_description),
         onResetClick = {
             resetDialog(context, title) { _, _ ->
-                val job = Job()
-                CoroutineScope(Dispatchers.IO + job).launch {
-                    Setting.DownloadSize.restoreDefault(context)
-                    job.complete()
-                }
+                await { Setting.DownloadSize.restoreDefault(context) }
                 reloadAppDialog(context)
             }
         },
@@ -166,11 +169,7 @@ private fun itemDownloadSize(context: Context): SettingsItem {
             onSelected = {
                 resetDialog(context, title) { _, _ ->
                     selected = it
-                    val job = Job()
-                    CoroutineScope(Dispatchers.IO + job).launch {
-                        Setting.DownloadSize.setObject(context, it)
-                        job.complete()
-                    }
+                    await { Setting.DownloadSize.setObject(context, it) }
                     restartApp(context as MainActivity, PrepareActivity::class.java)
                 }
             }
@@ -184,7 +183,7 @@ private fun itemDownloadPerDay(context: Context): SettingsItem {
         title = title,
         subtitle = context.getString(R.string.data_usage_setting_description),
     ) {
-        var text by remember { mutableStateOf("Calculating...") }
+        var text by remember { mutableStateOf(context.getString(R.string.calculating)) }
         LaunchedEffect(Unit) {
             val interval = Setting.RequestInterval.get(context)
             val size = Setting.DownloadSize.getObject(context)
@@ -215,8 +214,52 @@ private fun itemGraphSize(context: Context): SettingsSlider<Int> {
 }
 
 
+private fun itemShowSummary(context: Context): SettingsItem {
+    return SettingsItem {
+        var value by rememberSaveable { mutableStateOf(Setting.Summarize.defaultValue) }
+        LaunchedEffect(Unit) { value = Setting.Summarize.get(context) }
+        Surface(
+            onClick = { value = !value },
+            color = colorResource(R.color.background),
+            shape = RoundedCornerShape(20.dp)
+        ) {
+            Column(modifier = Modifier.padding(it)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.summarize_setting_title),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Switch(
+                        checked = value,
+                        colors = SwitchDefaults.colors(
+                            uncheckedTrackColor = colorResource(R.color.surface).copy(.5f),
+                            uncheckedThumbColor = colorResource(R.color.onBackground).copy(.5f),
+                            uncheckedBorderColor = colorResource(R.color.onBackground).copy(.5f),
+                        ),
+                        onCheckedChange = {
+                            await { Setting.Summarize.set(context, it) }
+                            value = it
+                        },
+                    )
+                }
+                Spacer(modifier = Modifier.height(5.dp))
+                Text(
+                    text = stringResource(R.string.summarize_setting_description),
+                    fontSize = 14.sp
+                )
+            }
+        }
+    }
+}
+
+
 private fun itemVersion(context: Context): SettingsItem {
     //? For preview only
+
     if (context !is MainActivity) return return SettingsItem(
         title = context.getString(R.string.version),
         subtitle = "version",
@@ -282,7 +325,7 @@ private fun itemLicense(context: Context): SettingsItem {
     }
 }
 
-@Preview(showBackground = true)
+//@Preview(showBackground = true)
 @Composable
 fun SettingsScreenPreview() {
     SettingsScreen(null)
