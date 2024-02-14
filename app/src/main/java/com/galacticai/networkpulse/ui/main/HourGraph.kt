@@ -23,9 +23,9 @@ import com.galacticai.networkpulse.models.settings.Setting
 @Composable
 fun HourGraph(data: CubicChartData) {
     val ctx = LocalContext.current
-    var graphWidth by remember { mutableIntStateOf(Setting.GraphSize.defaultValue) }
+    var graphWidth by remember { mutableIntStateOf(Setting.GraphCellSize.defaultValue) }
     LaunchedEffect(Unit) {
-        graphWidth = Setting.GraphSize.get(ctx)
+        graphWidth = Setting.GraphCellSize.get(ctx)
     }
 
     Surface(

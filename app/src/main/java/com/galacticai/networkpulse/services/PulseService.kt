@@ -15,8 +15,8 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.isServiceRunning
-import com.galacticai.networkpulse.common.models.PatientTaskQueue
-import com.galacticai.networkpulse.common.models.TaskInfo
+import com.galacticai.networkpulse.common.models.patient_task_queue.PatientTaskEvent
+import com.galacticai.networkpulse.common.models.patient_task_queue.PatientTaskQueue
 import com.galacticai.networkpulse.databse.LocalDatabase
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.models.settings.Setting
@@ -115,7 +115,7 @@ class PulseService : Service() {
 
     private fun initQueue() {
         queue = PatientTaskQueue(
-            null, null, null,
+            null, null, null, null,
             ::onDoneListener, ::onTimeoutListener, ::onErrorListener, ::onFinallyListener
         )
     }
@@ -160,73 +160,66 @@ class PulseService : Service() {
 
     private fun event(ev: Any) = EventBus.getDefault().post(ev)
 
-    data class DoneEvent(val timedSpeedRecord: SpeedRecord)
+    interface PulseEvent {
+        class AnyEvent(val ev: PulseEvent) : PulseEvent
+        data class DoneEvent(val record: SpeedRecord) : PulseEvent
 
-    data class OtherEvent(
-        val timestamp: Long,
-        val record: SpeedRecord,
-        val response: Response?,
-        val runtime: Duration
-    )
+        data class OtherEvent(
+            val timestamp: Long,
+            val record: SpeedRecord,
+            val response: Response?,
+            val runtime: Duration
+        ) : PulseEvent
 
-    data class TimeoutEvent(
-        val key: Long,
-        val record: SpeedRecord,
-        val timeout: Duration,
-        val startedAt: Date
-    )
+        data class TimeoutEvent(
+            val key: Long,
+            val record: SpeedRecord,
+            val timeout: Duration,
+            val startedAt: Date
+        ) : PulseEvent
 
-    data class ErrorEvent(
-        val key: Long,
-        val record: SpeedRecord,
-        val error: Exception,
-        val startedAt: Date,
-        val runtime: Duration
-    )
-
-
-    private fun onDoneListener(
-        timestamp: Long,
-        response: Response?,
-        startedAt: Date,
-        runtime: Duration
-    ) {
-        onResponse(timestamp, response!!, runtime)
+        data class ErrorEvent(
+            val key: Long,
+            val record: SpeedRecord,
+            val error: Exception,
+            val startedAt: Date,
+            val runtime: Duration
+        ) : PulseEvent
     }
 
-    private fun onTimeoutListener(timestamp: Long, timeout: Duration, startTime: Date) {
+
+    private fun onDoneListener(ev: PatientTaskEvent.TaskDone<Long, Response>) {
+        onResponse(ev.key, ev.value!!, ev.runtime)
+    }
+
+    private fun onTimeoutListener(ev: PatientTaskEvent.TaskTimeout<Long>) {
         val record =
             SpeedRecord(
-                timestamp,
+                ev.key,
                 SpeedRecord.Status.Timeout.toInt(),
-                timeout.toMillis().toInt(),
+                ev.timeout.toMillis().toInt(),
                 null,
                 null
             )
         LocalDatabase.getDB(this).apply {
             speedRecordsDAO().insert(record)
         }.close()
-        event(TimeoutEvent(timestamp, record, timeout, startTime))
+        event(PulseEvent.TimeoutEvent(ev.key, record, ev.timeout, ev.startedAt))
     }
 
-    private fun onErrorListener(
-        timestamp: Long,
-        error: Exception,
-        startTime: Date,
-        runtime: Duration
-    ) {
+    private fun onErrorListener(ev: PatientTaskEvent.TaskError<Long>) {
         //? only IOException by OkHttp's call.execute() indicates a failed request,
         //? the rest are accidental and should be fixed
-        if (error !is IOException) throw error
+        if (ev.error !is IOException) throw ev.error
 
-        val record = SpeedRecord.Error(timestamp, runtime.toMillis().toInt())
+        val record = SpeedRecord.Error(ev.key, ev.runtime.toMillis().toInt())
         LocalDatabase.getDB(this).apply {
             speedRecordsDAO().insert(record)
         }.close()
-        event(ErrorEvent(timestamp, record, error, startTime, runtime))
+        event(PulseEvent.ErrorEvent(ev.key, record, ev.error, ev.startedAt, ev.runtime))
     }
 
-    private fun onFinallyListener(timestamp: Long, info: TaskInfo<Response>) {
+    private fun onFinallyListener(ev: PatientTaskEvent.TaskFinally<Long, Response>) {
 
     }
 
@@ -250,7 +243,7 @@ class PulseService : Service() {
             speedRecordsDAO().insert(record)
         }.close()
 
-        event(DoneEvent(record))
+        event(PulseEvent.DoneEvent(record))
     }
 
     private fun onResponseOther(timestamp: Long, response: Response?, runtime: Duration) {
@@ -262,7 +255,7 @@ class PulseService : Service() {
         LocalDatabase.getDB(this).apply {
             speedRecordsDAO().insert(record)
         }.close()
-        event(OtherEvent(timestamp, record, response, runtime))
+        event(PulseEvent.OtherEvent(timestamp, record, response, runtime))
     }
 
 

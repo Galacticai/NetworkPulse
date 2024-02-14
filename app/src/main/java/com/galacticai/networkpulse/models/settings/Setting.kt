@@ -10,6 +10,10 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.galacticai.networkpulse.common.models.Jsonable
+import com.galacticai.networkpulse.common.models.data_value.BitUnit
+import com.galacticai.networkpulse.common.models.data_value.BitUnitBase
+import com.galacticai.networkpulse.common.models.data_value.BitUnitExponent
+import com.galacticai.networkpulse.common.models.data_value.ShortLongName
 import com.galacticai.networkpulse.ui.main.screens.dataStore
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
@@ -20,11 +24,18 @@ sealed class Setting<T>(
     val defaultValue: T,
 ) {
     companion object {
-        suspend fun restoreAll(context: Context) {
-            RequestInterval.restoreDefault(context)
-            GraphSize.restoreDefault(context)
-            DownloadSize.restoreDefault(context)
-        }
+        val entries
+            get() = listOf(
+                RequestInterval,
+                DownloadSize,
+                Summarize,
+                GraphHeight,
+                GraphScaleLinesCount,
+                GraphCellSize,
+                GraphCellSpacing,
+            )
+
+        suspend fun restoreAll(c: Context) = entries.forEach { it.restoreDefault(c) }
     }
 
     val key = when (defaultValue) {
@@ -44,33 +55,53 @@ sealed class Setting<T>(
         ?: defaultValue
 
     @Suppress("UNCHECKED_CAST") //? get(..) will always save the key as Preferences.Key<T>
-    suspend fun set(context: Context, value: T) =
+    suspend fun set(context: Context, value: T) {
         context.dataStore.edit { it[key as Preferences.Key<T>] = value }
+    }
 
     suspend fun restoreDefault(context: Context) =
         set(context, defaultValue)
 
-    sealed class SettingsObject<T : Jsonable>(
+    abstract class SettingsObject<T : Jsonable>(
         keyName: String,
         val defaultObject: T
     ) : Setting<String>(
         keyName,
         defaultObject.toJson().toString()
     ) {
-        open suspend fun setObject(context: Context, value: T) =
+        open suspend fun setObject(context: Context, value: T) {
             super.set(context, value.toJson().toString())
+        }
 
         abstract suspend fun getObject(context: Context): T
     }
+
+    data object EnablePulseService : Setting<Boolean>(
+        keyName = "EnablePulseService",
+        defaultValue = true
+    )
 
     data object RequestInterval : Setting<Long>(
         keyName = "RequestInterval",
         defaultValue = 20_000L
     )
 
-    data object GraphSize : Setting<Int>(
-        keyName = "GraphSize",
-        defaultValue = 35
+    data object DownloadSize : SettingsObject<com.galacticai.networkpulse.models.DownloadSize>(
+        keyName = "DownloadSize",
+        defaultObject = com.galacticai.networkpulse.models.DownloadSize(
+            100,
+            BitUnit(BitUnitExponent.Metric.Kilo, BitUnitBase.Byte)
+        )
+    ) {
+        override suspend fun getObject(context: Context): com.galacticai.networkpulse.models.DownloadSize =
+            com.galacticai.networkpulse.models.DownloadSize.fromJson(
+                JSONObject(super.get(context))
+            )
+    }
+
+    data object RecentRecordsTime : Setting<Int>(
+        keyName = "RecentRecordsTime",
+        defaultValue = 1000 * 60 * 60 * 2
     )
 
     data object Summarize : Setting<Boolean>(
@@ -78,13 +109,62 @@ sealed class Setting<T>(
         defaultValue = true
     )
 
-    data object DownloadSize : SettingsObject<com.galacticai.networkpulse.models.DownloadSize>(
-        keyName = "DownloadSize",
-        defaultObject = com.galacticai.networkpulse.models.DownloadSize.Size10K
+    data object ValueUnitBase : SettingsObject<ValueUnitBase.JsonableBitUnitBase>(
+        keyName = "ValueUnitBase",
+        defaultObject = JsonableBitUnitBase.fromOriginalType(BitUnitBase.Byte)
     ) {
-        override suspend fun getObject(context: Context): com.galacticai.networkpulse.models.DownloadSize =
-            com.galacticai.networkpulse.models.DownloadSize.fromJson(
+        class JsonableBitUnitBase(name: ShortLongName, toBitMultiplier: Int) :
+            BitUnitBase(name, toBitMultiplier), Jsonable {
+            fun toOriginalType(): BitUnitBase = BitUnitBase(name, toBitMultiplier)
+            override fun toJson() = JSONObject().apply {
+                put("toBitMultiplier", toBitMultiplier)
+                put("name", JSONObject().apply {
+                    put("short", name.short)
+                    put("long", name.long)
+                })
+            }
+
+            companion object {
+                fun BitUnitBase.jsonable() = fromOriginalType(this)
+                fun fromOriginalType(bitUnitBase: BitUnitBase): JsonableBitUnitBase =
+                    JsonableBitUnitBase(bitUnitBase.name, bitUnitBase.toBitMultiplier)
+
+                fun fromJson(json: JSONObject): JsonableBitUnitBase {
+                    val toBitMultiplier = json.getInt("toBitMultiplier")
+                    val nameJ = json.getJSONObject("name")
+                    val name = ShortLongName(
+                        nameJ.getString("short"),
+                        nameJ.getString("long")
+                    )
+                    return JsonableBitUnitBase(name, toBitMultiplier)
+                }
+            }
+        }
+
+        override suspend fun getObject(context: Context): JsonableBitUnitBase =
+            JsonableBitUnitBase.fromJson(
                 JSONObject(super.get(context))
             )
     }
+
+    data object GraphHeight : Setting<Int>(
+        keyName = "GraphHeight",
+        defaultValue = 200
+    )
+
+    data object GraphScaleLinesCount : Setting<Int>(
+        keyName = "GraphScaleLinesCount",
+        defaultValue = 10
+    )
+
+    data object GraphCellSize : Setting<Int>(
+        keyName = "GraphCellSize",
+        defaultValue = 35
+    )
+
+    data object GraphCellSpacing : Setting<Int>(
+        keyName = "GraphCellSpacing",
+        defaultValue = 2
+    )
+
 }

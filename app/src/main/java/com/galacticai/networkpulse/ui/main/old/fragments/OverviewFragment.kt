@@ -46,18 +46,18 @@ class OverviewFragment : Fragment() {
     private val hourChartDownEntries get() = hourChartEntries.map { it.down }
 
     @Subscribe
-    fun onPulseDone(ev: PulseService.DoneEvent) {
+    fun onPulseDone(ev: PulseService.PulseEvent.DoneEvent) {
         hourChartEntries.add(
             RadarSpeedEntry(
-                RadarEntry(ev.timedSpeedRecord.up ?: 0f),
-                RadarEntry(ev.timedSpeedRecord.down ?: 0f)
+                RadarEntry(ev.record.up ?: 0f),
+                RadarEntry(ev.record.down ?: 0f)
             )
         )
         updateChart()
     }
 
     @Subscribe
-    fun onPulseOther(ev: PulseService.OtherEvent) {
+    fun onPulseOther(ev: PulseService.PulseEvent.OtherEvent) {
         Log.d("PulseService", ev.response?.toString() ?: "no response")
         hourChartEntries.add(
             RadarSpeedEntry(
@@ -69,7 +69,7 @@ class OverviewFragment : Fragment() {
     }
 
     @Subscribe
-    fun onPulseError(ev: PulseService.ErrorEvent) {
+    fun onPulseError(ev: PulseService.PulseEvent.ErrorEvent) {
         Log.e("PulseService", ev.error.message.toString())
     }
 

@@ -41,35 +41,43 @@ import kotlin.math.min
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun DateTimePicker(
+    modifier: Modifier = Modifier,
     initialValue: Long,
-    allowedRange: ClosedRange<Long> = 0L..Long.MAX_VALUE,
+    allowedRange: Pair<Long, Long> = 0L to Long.MAX_VALUE,
     confirmText: @Composable () -> Unit,
     cancelText: @Composable () -> Unit,
     onDismissRequest: () -> Unit,
     onPicked: (Long) -> Unit,
 ) {
+    assert(allowedRange.first <= allowedRange.second)
+
     val datePickerState = rememberDatePickerState()
     val timePickerState = rememberTimePickerState()
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
     val coroutineScope = rememberCoroutineScope()
 
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(modifier)
+    ) {
         @Composable
         fun tabContent(selected: Boolean, icon: FaIconType, title: String) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                FaIcon(icon)
+                val color = colorResource(
+                    if (selected) R.color.onBackground
+                    else R.color.onPrimaryContainer
+                )
+                FaIcon(icon, tint = color)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     modifier = Modifier.weight(1f),
                     text = title,
                     textAlign = TextAlign.Center,
-                    color = colorResource(
-                        if (selected) R.color.onBackground
-                        else R.color.onPrimaryContainer
-                    )
+                    color = color
                 )
             }
         }
@@ -89,12 +97,17 @@ fun DateTimePicker(
             state = pagerState
         ) {
             when (it) {
-                1 -> TimePicker(state = timePickerState)
                 0 -> DatePicker(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
                     state = datePickerState,
                     dateValidator = { time ->
-                        allowedRange.start <= time && time <= allowedRange.endInclusive
+                        allowedRange.first >= time && time <= allowedRange.second
                     },
+                )
+
+                1 -> TimePicker(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    state = timePickerState
                 )
             }
         }
@@ -103,6 +116,7 @@ fun DateTimePicker(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .align(Alignment.End)
                 .padding(20.dp),
             horizontalArrangement = Arrangement.End
         ) {
@@ -111,8 +125,8 @@ fun DateTimePicker(
             }
             Button(onClick = {
                 val unit = TimeUnit.MILLISECONDS
-                val maxHour = (unit.toHours(allowedRange.endInclusive) % 24).toInt()
-                val maxMinute = (unit.toMinutes(allowedRange.endInclusive) % 60).toInt()
+                val maxHour = (unit.toHours(allowedRange.second) % 24).toInt()
+                val maxMinute = (unit.toMinutes(allowedRange.second) % 60).toInt()
 
                 val date = datePickerState.selectedDateMillis ?: initialValue
                 val hour = min(timePickerState.hour, maxHour)

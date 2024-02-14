@@ -1,8 +1,10 @@
 package com.galacticai.networkpulse.common
 
+import java.util.Calendar
 import kotlin.time.Duration
 
-open class DurationFormatSuffixes(
+open class DateSuffixes(
+    val years: String,
     val months: String,
     val days: String,
     val hours: String,
@@ -10,7 +12,19 @@ open class DurationFormatSuffixes(
     val seconds: String,
     val milliseconds: String,
 ) {
-    data object Default : DurationFormatSuffixes(
+    /** Map of [Calendar] fields to [DateSuffixes] */
+    val ofCalendar = mapOf(
+        Calendar.YEAR to years,
+        Calendar.MONTH to months,
+        Calendar.DAY_OF_MONTH to days,
+        Calendar.HOUR_OF_DAY to hours,
+        Calendar.MINUTE to minutes,
+        Calendar.SECOND to seconds,
+        Calendar.MILLISECOND to milliseconds
+    )
+    
+    data object Default : DateSuffixes(
+        years = "y",
         months = "mo",
         days = "d",
         hours = "h",
@@ -18,10 +32,11 @@ open class DurationFormatSuffixes(
         seconds = "s",
         milliseconds = "ms",
     )
+
 }
 
 fun Duration.format(
-    suffixes: DurationFormatSuffixes = DurationFormatSuffixes.Default,
+    suffixes: DateSuffixes = DateSuffixes.Default,
     joint: String = ", ",
     /** Max number of parts to return
      *

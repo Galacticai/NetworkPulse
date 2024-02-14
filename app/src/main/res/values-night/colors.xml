@@ -21,14 +21,18 @@
     <color name="onSurface">@color/galactic_blue_50</color>
 
     <!-- Other Colors -->
-    <color name="error">#B71C1C</color>
-    <color name="onError">#EF9A9A</color>
-    <color name="errorContainer">#36000a</color>
-    <color name="onErrorContainer">#ffbac7</color>
+    <color name="error">#ba1a1a</color>
+    <color name="onError">@color/white</color>
+    <color name="errorContainer">#410002</color>
+    <color name="onErrorContainer">#ffdad6</color>
 
-    <color name="success">#1B5E20</color>
-    <color name="onSuccess">#A5D6A7</color>
+    <color name="success">#1aba1a</color>
+    <color name="onSuccess">@color/white</color>
+    <color name="successContainer">#024100</color>
+    <color name="onSuccessContainer">#d6ffda</color>
 
-    <color name="warning">#ffe082</color>
-    <color name="onWarning">#903F00</color>
+    <color name="warning">#ba911a</color>
+    <color name="onWarning">@color/white</color>
+    <color name="warningContainer">#412e00</color>
+    <color name="onWarningContainer">#fff9d6</color>
 </resources>

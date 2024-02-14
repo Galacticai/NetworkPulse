@@ -23,8 +23,10 @@
     <string name="prepare_activity_title">Getting started…</string>
     <string name="pulse_interval_setting_description">The delay between network checks</string>
     <string name="pulse_interval_setting_title">Pulse interval</string>
-    <string name="graph_size_setting_title">Graph size</string>
-    <string name="graph_size_setting_description">Horizontal width of each cell within a graph</string>
+    <string name="graph_height_setting_title">Graph height</string>
+    <string name="graph_height_setting_description">Vertical height of a graph</string>
+    <string name="graph_cell_size_setting_title">Graph cell size</string>
+    <string name="graph_cell_size_setting_description">Horizontal width of each cell within a graph</string>
     <string name="reload">Reload</string>
     <string name="do_you_want_to_reload_the_app_to_apply_the_changes">Do you want to reload the app to apply the changes?</string>
     <string name="display">Display</string>
@@ -58,6 +60,9 @@
     <string name="total">Total</string>
     <string name="success">Success</string>
     <string name="fail">Fail</string>
+    <string name="failed">Failed</string>
+    <string name="successAdjective">Successful</string>
+    <string name="failAdjective">Failed</string>
     <string name="average_download">Average download</string>
     <string name="longest_success_streak">Longest success streak</string>
     <string name="longest_failure_streak">Longest failure streak</string>
@@ -77,4 +82,25 @@
     <string name="date">Date</string>
     <string name="time">Time</string>
     <string name="time_range">Time range</string>
+    <string name="load">Load</string>
+    <string name="overview_idle_text">Select and load a range of records</string>
+    <string name="graph_cell_spacing_setting_title">Graph cell spacing</string>
+    <string name="graph_cell_spacing_setting_description">Space between each cell within a graph</string>
+    <string name="year_suffix">y</string>
+    <string name="graph_scale_lines_count_setting_description">The amount of vertical scale indication lines within a graph</string>
+    <string name="graph_scale_lines_count_setting_title">Graph scale lines</string>
+    <string name="enable_pulse_service_setting_title">Enable pulse service</string>
+    <string name="enable_pulse_service_setting_description">Pulse service is the core functionality of NetworkPulse, it will check and handle your connection status.</string>
+    <string name="value_unit_setting_title">Value unit</string>
+    <string name="value_unit_setting_description">Unit base of values displayed in the app\n- Example: 1 Byte = 8 Bit</string>
+    <string name="recent_records_time_setting_title">Recent records time</string>
+    <string name="timeout">Timeout</string>
+    <string name="duration">Duration</string>
+    <string name="download_speed">Download Speed</string>
+    <string name="upload_speed">Upload speed</string>
+    <string name="relative_time">Relative time</string>
+    <string name="time_ago">ago</string>
+    <string name="speed">Speed</string>
+    <string name="size">Size</string>
+    <string name="record_details">Record details</string>
 </resources>

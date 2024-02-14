@@ -31,8 +31,10 @@
     <string name="pulse_setting_group_title">النبض</string>
     <string name="pulse_interval_setting_title">فاصل النبضات</string>
     <string name="pulse_interval_setting_description">الوقت بين فحوصات الشبكة</string>
-    <string name="graph_size_setting_title">حجم خلية الرسم البياني</string>
-    <string name="graph_size_setting_description">الحجم الأفقي لكل خلية داخل الرسم البياني</string>
+    <string name="graph_height_setting_title">حجم الرسم البياني</string>
+    <string name="graph_height_setting_description">الطول العمودي للرسم البياني</string>
+    <string name="graph_cell_size_setting_title">حجم خلية الرسم البياني</string>
+    <string name="graph_cell_size_setting_description">الحجم الأفقي لكل خلية داخل الرسم البياني</string>
     <string name="reload">إعادة التحميل</string>
     <string name="do_you_want_to_reload_the_app_to_apply_the_changes">هل ترغب في إعادة تحميل البرنامج لتطبيق التغييرات؟</string>
     <string name="display">العرض</string>
@@ -58,6 +60,9 @@
     <string name="total">المجموع</string>
     <string name="success">النجاح</string>
     <string name="fail">الفشل</string>
+    <string name="failed">فشل</string>
+    <string name="successAdjective">ناجح</string>
+    <string name="failAdjective">فاشل</string>
     <string name="average_download">متوسط التنزيل</string>
     <string name="average_time">متوسط الوقت</string>
     <string name="longest_success_streak">أطول مدة للنجاح</string>
@@ -77,4 +82,25 @@
     <string name="date">التاريخ</string>
     <string name="time">الوقت</string>
     <string name="time_range">المدى الزمني</string>
+    <string name="load">تحميل</string>
+    <string name="overview_idle_text">اختر مدى زمنيا وقم بتحميل السجلات</string>
+    <string name="graph_cell_spacing_setting_title">مسافة خلايا الرسم البياني</string>
+    <string name="graph_cell_spacing_setting_description">المسافة الأفقية بين خلايا الرسم البياني</string>
+    <string name="year_suffix">س</string>
+    <string name="graph_scale_lines_count_setting_title">عدد خطوط المقياس</string>
+    <string name="graph_scale_lines_count_setting_description">عدد خطوط إشارة المقياس الرأسي داخل الرسم البياني</string>
+    <string name="enable_pulse_service_setting_title">تفعيل خدمة النبض</string>
+    <string name="enable_pulse_service_setting_description">خدمة النبض هي الوظيفة الأساسية لنبض الشبكة، وسوف تتحقق من حالة اتصال جهازك.</string>
+    <string name="value_unit_setting_title">وحدة القياس</string>
+    <string name="value_unit_setting_description">قاعدة الوحدات المستخدمة في القيم المعروضة في التطبيق\n- مثال: 1 بايت = 8 بت</string>
+    <string name="recent_records_time_setting_title">Recent records time</string>
+    <string name="timeout">نفذ الوقت</string>
+    <string name="duration">المدة</string>
+    <string name="download_speed">سرعة التنزيل</string>
+    <string name="upload_speed">سرعة الرفع</string>
+    <string name="relative_time">الوقت النسبي</string>
+    <string name="time_ago">في الماضي</string>
+    <string name="speed">السرعة</string>
+    <string name="size">الحجم</string>
+    <string name="record_details">تفاصيل السجل</string>
 </resources>

@@ -1,11 +1,11 @@
-package com.galacticai.networkpulse.common.models
+package com.galacticai.networkpulse.common.models.patient_task_queue
 
 import android.os.CancellationSignal
 import android.util.Log
+import com.galacticai.networkpulse.common.models.FutureValue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -17,17 +17,19 @@ import java.util.SortedMap
  */
 class PatientTaskQueue<K : Comparable<K>, V> {
     abstract class PatientTaskEvents<K : Comparable<K>, V> {
-        abstract fun onAddListener(key: K)
-        abstract fun onStartListener(key: K, startedAt: Date)
-        abstract fun onStopListener(key: K, startedAt: Date, runtime: Duration)
-        abstract fun onDoneListener(key: K, value: V?, startedAt: Date, runtime: Duration)
-        abstract fun onTimeoutListener(key: K, timeout: Duration, startedAt: Date)
-        abstract fun onErrorListener(key: K, error: Exception, startedAt: Date, runtime: Duration)
-        abstract fun onFinallyListener(key: K, info: TaskInfo<V>)
+        abstract fun onAnyListener(ev: PatientTaskEvent)
+        abstract fun onAddListener(ev: PatientTaskEvent.TaskAdd<K>)
+        abstract fun onStartListener(ev: PatientTaskEvent.TaskStart<K>)
+        abstract fun onStopListener(ev: PatientTaskEvent.TaskStop<K>)
+        abstract fun onDoneListener(ev: PatientTaskEvent.TaskDone<K, V>)
+        abstract fun onTimeoutListener(ev: PatientTaskEvent.TaskTimeout<K>)
+        abstract fun onErrorListener(ev: PatientTaskEvent.TaskError<K>)
+        abstract fun onFinallyListener(ev: PatientTaskEvent.TaskFinally<K, V>)
     }
 
     constructor()
     constructor(
+        onAnyListener: PatientTaskAnyEvent? = null,
         onAddListener: PatientTaskAdd<K>? = null,
         onStartListener: PatientTaskStart<K>? = null,
         onStopListener: PatientTaskStop<K>? = null,
@@ -36,6 +38,7 @@ class PatientTaskQueue<K : Comparable<K>, V> {
         onErrorListener: PatientTaskError<K>? = null,
         onFinallyListener: PatientTaskFinally<K, V>? = null
     ) : this() {
+        this.onAnyListener = onAnyListener
         this.onAddListener = onAddListener
         this.onStartListener = onStartListener
         this.onTimeoutListener = onTimeoutListener
@@ -46,12 +49,14 @@ class PatientTaskQueue<K : Comparable<K>, V> {
     }
 
     constructor(events: PatientTaskEvents<K, V>) : this(
+        events::onAnyListener,
         events::onAddListener,
         events::onStartListener,
         events::onStopListener,
         events::onDoneListener,
         events::onTimeoutListener,
-        events::onErrorListener
+        events::onErrorListener,
+        events::onFinallyListener,
     )
 
     private val tasks: SortedMap<K, TaskInfo<V>> = sortedMapOf()
@@ -74,7 +79,9 @@ class PatientTaskQueue<K : Comparable<K>, V> {
         if (tasks.containsKey(key)) return false
 
         tasks[key] = TaskInfo(task, timeout, FutureValue.Pending(Date()))
-        onAddListener?.invoke(key)
+        val addEvent = PatientTaskEvent.TaskAdd(key)
+        onAddListener?.invoke(addEvent)
+        onAnyListener?.invoke(addEvent)
         return true
     }
 
@@ -113,10 +120,11 @@ class PatientTaskQueue<K : Comparable<K>, V> {
         fun getRuntime(): Duration = Duration.ofMillis(System.currentTimeMillis() - startedAt.time)
 
         info.value = FutureValue.Running(CancellationSignal(), startedAt)
-        onStartListener?.invoke(key, startedAt)
+        val startEvent = PatientTaskEvent.TaskStart(key, startedAt)
+        onStartListener?.invoke(startEvent)
+        onAnyListener?.invoke(startEvent)
         var value: V? = null
-        val job = Job()
-        CoroutineScope(Dispatchers.IO + job).launch {
+        CoroutineScope(Dispatchers.IO).launch {
             try {
                 withTimeout(info.timeout.toMillis()) {
                     Log.d("PatientTaskQueue", "run $key . withTimeout")
@@ -128,7 +136,9 @@ class PatientTaskQueue<K : Comparable<K>, V> {
                         info.value = FutureValue.Failed.Error(error, startedAt, getRuntime())
                         Log.d("PatientTaskQueue", "run $key . Failed.Error")
                     } finally {
-                        onFinallyListener?.invoke(key, info)
+                        val finallyEvent = PatientTaskEvent.TaskFinally(key, info)
+                        onFinallyListener?.invoke(finallyEvent)
+                        onAnyListener?.invoke(finallyEvent)
                     }
                 }
             } catch (error: CancellationException) {
@@ -140,8 +150,9 @@ class PatientTaskQueue<K : Comparable<K>, V> {
                     Log.d("PatientTaskQueue", "run $key . Stopped")
                 }
             } finally {
-                job.cancel()
-                onFinallyListener?.invoke(key, info)
+                val finallyEvent = PatientTaskEvent.TaskFinally(key, info)
+                onFinallyListener?.invoke(finallyEvent)
+                onAnyListener?.invoke(finallyEvent)
             }
         }
         return value
@@ -174,38 +185,52 @@ class PatientTaskQueue<K : Comparable<K>, V> {
     /** Trigger the event of a task
      * @return true if the task has ended */
     private fun triggerTaskEvent(key: K, taskInfo: TaskInfo<V>): Boolean {
+        var ev: PatientTaskEvent? = null
         when (val taskValue = taskInfo.value) {
-            is FutureValue.Finished -> onDoneListener?.invoke(
-                key,
-                taskValue.value,
-                taskValue.startedAt!!,
-                taskValue.runtime!!,
-            )
+            is FutureValue.Finished -> {
+                ev = PatientTaskEvent.TaskDone(
+                    key,
+                    taskValue.value,
+                    taskValue.startedAt!!,
+                    taskValue.runtime!!,
+                )
+                onDoneListener?.invoke(ev)
+            }
 
-            is FutureValue.Stopped -> onStopListener?.invoke(
-                key,
-                taskValue.startedAt!!,
-                taskValue.runtime!!
-            )
+            is FutureValue.Stopped -> {
+                ev = PatientTaskEvent.TaskStop(
+                    key,
+                    taskValue.startedAt!!,
+                    taskValue.runtime!!
+                )
+                onStopListener?.invoke(ev)
+            }
 
-            is FutureValue.Failed.Timeout -> onTimeoutListener?.invoke(
-                key,
-                taskValue.timeout,
-                taskValue.startedAt!!
-            )
+            is FutureValue.Failed.Timeout -> {
+                ev = PatientTaskEvent.TaskTimeout(
+                    key,
+                    taskValue.timeout,
+                    taskValue.startedAt!!
+                )
+                onTimeoutListener?.invoke(ev)
+            }
 
-            is FutureValue.Failed.Error -> onErrorListener?.invoke(
-                key,
-                taskValue.error,
-                taskValue.startedAt!!,
-                taskValue.runtime!!,
-            )
+            is FutureValue.Failed.Error -> {
+                ev = PatientTaskEvent.TaskError(
+                    key,
+                    taskValue.error,
+                    taskValue.startedAt!!,
+                    taskValue.runtime!!,
+                )
+                onErrorListener?.invoke(ev)
+            }
 
             else -> {} //? not ended, do nothing
         }
+        if (ev != null) onAnyListener?.invoke(ev)
         return isEnded(key)
     }
-    
+
     /** Add and run a task
      * @exception IllegalStateException if the task is already running
      * @exception NoSuchElementException if the task was not found
@@ -257,6 +282,9 @@ class PatientTaskQueue<K : Comparable<K>, V> {
     }
 
 
+    /** Called whenever any event occurs */
+    private var onAnyListener: PatientTaskAnyEvent? = null
+
     /** Called when a task is added */
     private var onAddListener: PatientTaskAdd<K>? = null
 
@@ -277,6 +305,11 @@ class PatientTaskQueue<K : Comparable<K>, V> {
 
     /** Called after the task had ended (even if failed)... (Useful for cleaning up...) */
     private var onFinallyListener: PatientTaskFinally<K, V>? = null
+
+    /** Called whenever any event occurs */
+    fun setOnAnyListener(listener: PatientTaskAnyEvent?) {
+        onAnyListener = listener
+    }
 
     /** Called when a task is added */
     fun setOnAddListener(listener: PatientTaskAdd<K>?) {
@@ -312,19 +345,18 @@ class PatientTaskQueue<K : Comparable<K>, V> {
     fun setOnFinallyListener(listener: PatientTaskFinally<K, V>?) {
         onFinallyListener = listener
     }
+
+
 }
 
-data class TaskInfo<V>(
-    val task: PatientTask<V>,
-    val timeout: Duration,
-    var value: FutureValue<V?>
-)
+data class TaskInfo<V>(val task: PatientTask<V>, val timeout: Duration, var value: FutureValue<V?>)
 
 typealias PatientTask<V> = () -> V
-typealias PatientTaskAdd<K> = (key: K) -> Unit
-typealias PatientTaskStart<K> = (key: K, startedAt: Date) -> Unit
-typealias PatientTaskStop<K> = (key: K, startedAt: Date, runtime: Duration) -> Unit
-typealias PatientTaskDone<K, V> = (key: K, value: V?, startedAt: Date, runtime: Duration) -> Unit
-typealias PatientTaskTimeout<K> = (key: K, timeout: Duration, startedAt: Date) -> Unit
-typealias PatientTaskError<K> = (key: K, error: Exception, startedAt: Date, runtime: Duration) -> Unit
-typealias PatientTaskFinally<K, V> = (key: K, info: TaskInfo<V>) -> Unit
+typealias PatientTaskAnyEvent = (ev: PatientTaskEvent) -> Unit
+typealias PatientTaskAdd<K> = (ev: PatientTaskEvent.TaskAdd<K>) -> Unit
+typealias PatientTaskStart<K> = (ev: PatientTaskEvent.TaskStart<K>) -> Unit
+typealias PatientTaskDone<K, V> = (ev: PatientTaskEvent.TaskDone<K, V>) -> Unit
+typealias PatientTaskStop<K> = (ev: PatientTaskEvent.TaskStop<K>) -> Unit
+typealias PatientTaskTimeout<K> = (ev: PatientTaskEvent.TaskTimeout<K>) -> Unit
+typealias PatientTaskError<K> = (ev: PatientTaskEvent.TaskError<K>) -> Unit
+typealias PatientTaskFinally<K, V> = (ev: PatientTaskEvent.TaskFinally<K, V>) -> Unit

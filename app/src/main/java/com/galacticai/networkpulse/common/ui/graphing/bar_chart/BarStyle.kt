@@ -1,4 +1,4 @@
-package com.galacticai.networkpulse.common.ui.graphing
+package com.galacticai.networkpulse.common.ui.graphing.bar_chart
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.graphics.Color

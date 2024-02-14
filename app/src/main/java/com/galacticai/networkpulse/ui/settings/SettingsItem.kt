@@ -51,7 +51,7 @@ open class SettingsItem(
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 if (onResetClick != null)
-                    IconButton(onClick = { onResetClick!!.invoke(ctx) }) {
+                    IconButton(onClick = { onResetClick.invoke(ctx) }) {
                         Icon(
                             Icons.Rounded.Refresh,
                             contentDescription = (stringResource(R.string.reset))
@@ -67,7 +67,7 @@ open class SettingsItem(
             }
             if (content != null) {
                 Spacer(modifier = Modifier.height(5.dp))
-                content!!.invoke(itemPadding)
+                content.invoke(itemPadding)
             }
         }
     }

@@ -31,6 +31,20 @@ interface SpeedRecordsDAO {
     @Query("SELECT * FROM logs")
     fun getAll(): List<SpeedRecord>
 
+    @Query("SELECT COUNT(*) FROM logs")
+    fun countAll(): Int
+
+    @Query("SELECT COUNT(*) FROM logs WHERE time BETWEEN :from AND :to")
+    fun countBetween(from: Long, to: Long): Int
+
+    /** Nearest time after to the provided [time] or null */
+    @Query("SELECT MIN(time) FROM logs WHERE time > :time")
+    fun getNearestNext(time: Long): Long?
+
+    /** Nearest time prior to the provided [time] or null */
+    @Query("SELECT MAX(time) FROM logs WHERE time < :time")
+    fun getNearestPrior(time: Long): Long?
+
     @Query("SELECT * FROM logs WHERE time BETWEEN :from AND :to")
     fun getBetween(from: Long, to: Long): List<SpeedRecord>
 

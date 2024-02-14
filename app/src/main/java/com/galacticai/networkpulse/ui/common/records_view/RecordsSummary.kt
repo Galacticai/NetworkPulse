@@ -20,10 +20,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.format
-import com.galacticai.networkpulse.common.number_with_unit.NumberUnit
-import com.galacticai.networkpulse.common.number_with_unit.NumberUnitBase
-import com.galacticai.networkpulse.common.number_with_unit.NumberUnitPower
-import com.galacticai.networkpulse.common.number_with_unit.NumberWithUnit
+import com.galacticai.networkpulse.common.models.data_value.BitUnit
+import com.galacticai.networkpulse.common.models.data_value.BitUnitBase
+import com.galacticai.networkpulse.common.models.data_value.BitUnitExponent
+import com.galacticai.networkpulse.common.models.data_value.BitValue
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.models.SpeedRecordSummary
 import com.galacticai.networkpulse.ui.common.durationSuffixes
@@ -95,13 +95,13 @@ fun RecordsSummary(records: List<SpeedRecord>) {
             fun durationFormat(duration: Duration) =
                 duration.format(durationSuffixes, separator, 2)
             statRow {
-                val down = NumberWithUnit(
-                    summary.downAverage.toDouble(),
-                    NumberUnit(NumberUnitPower.Binary.Kibi, NumberUnitBase.Byte)
-                ).toNearestUnit() //TODO: use after fixing
+                val down = BitValue(
+                    summary.downAverage,
+                    BitUnit(BitUnitExponent.Binary.Kibi, BitUnitBase.Byte)
+                ).toNearestUnit()
                 stat(
                     stringResource(R.string.average_download),
-                    down.toString(),
+                    "$down/s",
                     colorResource(R.color.primary)
                 )
                 //stat("Average upload", summary.downAverage, colorResource(R.color.primary))

@@ -1,7 +1,8 @@
-package com.galacticai.networkpulse.common.ui.graphing
+package com.galacticai.networkpulse.common.ui.graphing.bar_chart
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowLeft
@@ -24,54 +26,65 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import com.galacticai.networkpulse.R
+import androidx.compose.ui.unit.min
+import com.galacticai.networkpulse.common.ui.graphing.vertical
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.Range
-
 
 @Composable
 fun <T> BarChart(
     modifier: Modifier = Modifier,
-    barStyle: BarStyle<T> = BarStyle(),
-    xValueStyle: BarValueStyle.XBarValueStyle<T>? = BarValueStyle.XBarValueStyle(),
-    yValueStyle: BarValueStyle.YBarValueStyle? = BarValueStyle.YBarValueStyle(),
-    bgColor: Color = MaterialTheme.colorScheme.primary,
-    horizontalScaleStyle: BarHScaleStyle? = BarHScaleStyle(),
     startAsScrolledToEnd: Boolean = false,
+    style: BarChartStyle<T> = BarChartStyle(),
     parser: (T) -> BarData,
-    data: @Range(from = 0L, to = Long.MAX_VALUE) List<T>,
+    data: List<T>,
+    onBarClick: ((data: T, parsed: BarData, i: Int) -> Unit)? = null,
 ) {
-    val parsed = data.map { parser(it) }
-    val max = parsed.maxOf { it.value }
-    val min = parsed.minOf { it.value }
-    val range = min..max
+    var max by remember { mutableFloatStateOf(Float.MIN_VALUE) }
+    var min by remember { mutableFloatStateOf(Float.MAX_VALUE) }
+    fun range() = min..max
+    val dataParsed by remember(data) {
+        derivedStateOf {
+            data.map {
+                val barData = parser(it)
+                if (barData.value > max) max = barData.value
+                if (barData.value < min) min = barData.value
+                return@map barData
+            }
+        }
+    }
+    //? Not sure i need this after adding `remember(data)` but too afraid to remove
+    LaunchedEffect(data) {
+        @Suppress("UNUSED_EXPRESSION")
+        dataParsed //? Trigger derivedStateOf
+    }
+    if (max < min) return //? Brief moment before max and min are calculated
+
 
     val rowState = rememberLazyListState()
     suspend fun scrollToEnd() = rowState.scrollToItem(rowState.layoutInfo.totalItemsCount - 1)
     if (startAsScrolledToEnd) {
-        LaunchedEffect(rowState) {
+        LaunchedEffect(rowState, data) {
             if (rowState.layoutInfo.totalItemsCount > 0) scrollToEnd()
         }
     }
@@ -79,23 +92,23 @@ fun <T> BarChart(
 
     @Composable
     fun scaleLines() {
-        if (horizontalScaleStyle == null) return
-        val ySectionHeight = barStyle.heightMax / horizontalScaleStyle.count
+        if (style.horizontalScale == null) return
+        val ySectionHeight = style.bar.heightMax / style.horizontalScale.count
         Box {
             Column(
                 modifier = Modifier
-                    .height(barStyle.heightMax)
+                    .height(style.bar.heightMax)
                     .fillMaxWidth()
             ) {
                 @Composable
                 fun line() = Divider(
                     modifier = Modifier.padding(0.dp),
-                    thickness = horizontalScaleStyle.thickness,
-                    color = horizontalScaleStyle.color
+                    thickness = style.horizontalScale.thickness,
+                    color = style.horizontalScale.color
                 )
                 line()
-                repeat(horizontalScaleStyle.count) {
-                    Spacer(modifier = Modifier.height(ySectionHeight - horizontalScaleStyle.thickness))
+                repeat(style.horizontalScale.count) {
+                    Spacer(modifier = Modifier.height(ySectionHeight - style.horizontalScale.thickness))
                     line()
                 }
             }
@@ -106,46 +119,48 @@ fun <T> BarChart(
     fun scaleValues() {
         val context = LocalContext.current
         val direction = LocalLayoutDirection.current
-        if (horizontalScaleStyle == null) return
-        if (yValueStyle == null) return
+        if (style.horizontalScale == null) return
+        if (style.yValue == null) return
 
-        val ySectionHeight = barStyle.heightMax / horizontalScaleStyle.count
+        val ySectionHeight = style.bar.heightMax / style.horizontalScale.count
         Column(
-            modifier = Modifier.height(barStyle.heightMax),
+            modifier = Modifier.height(style.bar.heightMax),
             verticalArrangement = Arrangement.Bottom
         ) {
-            for (i in horizontalScaleStyle.count downTo 1) {
-                val value = max / horizontalScaleStyle.count * i
+            (style.horizontalScale.count downTo 1).forEach { i ->
+                val value = max / style.horizontalScale.count * i
                 Box(modifier = Modifier.height(ySectionHeight)) {
+                    val startPadding = style.yValue.margin.calculateStartPadding(direction)
+                    val endPadding = style.yValue.margin.calculateEndPadding(direction)
                     Surface(
                         modifier = Modifier
                             .heightIn(max = ySectionHeight)
                             .padding(
-                                bottom = yValueStyle.margin.calculateBottomPadding(),
-                                start = yValueStyle.margin.calculateStartPadding(direction),
-                                end = yValueStyle.margin.calculateEndPadding(direction),
+                                bottom = style.yValue.margin.calculateBottomPadding(),
+                                start = startPadding,
+                                end = endPadding,
                             ),
                         shape = RoundedCornerShape(
-                            topStart = yValueStyle.bgRadius / 2,
-                            topEnd = yValueStyle.bgRadius / 2,
-                            bottomStart = yValueStyle.bgRadius,
-                            bottomEnd = yValueStyle.bgRadius
+                            topStart = style.yValue.bgRadius / 2,
+                            topEnd = style.yValue.bgRadius / 2,
+                            bottomStart = style.yValue.bgRadius,
+                            bottomEnd = style.yValue.bgRadius
                         ),
-                        color = yValueStyle.bgColor(value, range),
+                        color = style.yValue.bgColor(value, range(), i),
                     ) {
                         Text(
                             modifier = Modifier
-                                .padding(yValueStyle.padding)
+                                .padding(style.yValue.padding)
                                 .onGloballyPositioned {
                                     if (value != max) return@onGloballyPositioned
                                     val width = it.size.width
                                     val density = context.resources.displayMetrics.density
-                                    scaleValuesWidth = (width / density).dp
+                                    scaleValuesWidth = (width / density).dp + startPadding + endPadding + 2.dp
                                 },
-                            text = yValueStyle.format(value, range),
-                            color = yValueStyle.color(value, range),
-                            fontSize = yValueStyle.fontSize,
-                            fontWeight = yValueStyle.fontWeight
+                            text = style.yValue.format(value, range(), i),
+                            color = style.yValue.color(value, range(), i),
+                            fontSize = style.yValue.fontSize,
+                            fontWeight = style.yValue.fontWeight
                         )
                     }
                 }
@@ -155,21 +170,26 @@ fun <T> BarChart(
 
     @Composable
     fun scrollToEndButton(modifier: Modifier) {
-        val can = rowState.canScrollForward
+        if (style.scrollButton == null) return
+        val canScroll = rowState.canScrollForward
         AnimatedVisibility(
             modifier = modifier,
-            visible = can
+            visible = canScroll
         ) {
             val direction = LocalLayoutDirection.current
             IconButton(
-                onClick = {
-                    if (!can) return@IconButton // ignore while animating
-                    MainScope().launch { scrollToEnd() }
-                },
+                modifier = Modifier
+                    .shadow(
+                        10.dp,
+                        shape = CircleShape,
+                        ambientColor = style.bgColor,
+                        spotColor = style.bgColor,
+                    ),
+                onClick = { if (canScroll) MainScope().launch { scrollToEnd() } },
                 colors = IconButtonDefaults.iconButtonColors(
-                    containerColor = colorResource(R.color.secondaryContainer),
-                    contentColor = colorResource(R.color.secondary)
-                )
+                    containerColor = style.scrollButton.bgColor,
+                    contentColor = style.scrollButton.color
+                ),
             ) {
                 Icon(
                     imageVector = if (direction == LayoutDirection.Ltr)
@@ -184,72 +204,62 @@ fun <T> BarChart(
 
     @Composable
     fun bars() {
-        fun calcBarHeight(value: Float): Dp {
-            // return max(
-            return barStyle.heightMax * (value / max) //,
-            //                min(
-            //                    barStyle.radius,
-            //                    min(
-            //                        barStyle.heightMax / 100,
-            //                        5.dp
-            //                    )
-            //                )
-            //            )
-        }
-
         val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
         LazyRow(
             modifier = Modifier
-                .height(barStyle.heightMax)
+                .height(style.bar.heightMax)
                 .fillMaxWidth(),
             state = rowState,
             verticalAlignment = Alignment.Bottom
         ) {
             item { Spacer(modifier = Modifier.width(scaleValuesWidth)) }
-
             data.forEachIndexed { i, dataItem ->
-                val parsedItem = parsed[i]
-                val barHeight = calcBarHeight(parsedItem.value)
+                if (i > dataParsed.lastIndex) return@forEachIndexed
+                val parsedItem = dataParsed[i]
+                val barHeight = style.bar.heightMax * (parsedItem.value / max)
 
-                if (i > 0) item { Spacer(modifier = Modifier.width(barStyle.spacing)) }
+                if (i > 0) item { Spacer(modifier = Modifier.width(style.bar.spacing)) }
                 item {
                     Box(
-                        modifier = Modifier.height(barStyle.heightMax),
+                        modifier = Modifier
+                            .height(style.bar.heightMax)
+                            .clickable { onBarClick?.invoke(dataItem, parsedItem, i) },
                         contentAlignment = Alignment.BottomCenter,
                     ) {
+                        val bottomRadius = min(style.bar.radius / 5, 2.dp)
                         Surface(
-                            modifier = Modifier.size(barStyle.width, barHeight),
+                            modifier = Modifier.size(style.bar.width, barHeight),
+                            color = style.bar.color(dataItem, range()),
                             shape = RoundedCornerShape(
-                                topStart = barStyle.radius,
-                                topEnd = barStyle.radius
+                                topStart = style.bar.radius, topEnd = style.bar.radius,
+                                bottomStart = bottomRadius, bottomEnd = bottomRadius,
                             ),
-                            border = barStyle.border,
-                            color = barStyle.color(dataItem, range),
+                            border = style.bar.border
                         ) {}
-                        if (xValueStyle != null) {
+                        if (style.xValue != null) {
                             Surface(
                                 modifier = Modifier
                                     .vertical()
                                     .rotate(90f * (if (isLtr) -1 else 1))
-                                    .heightIn(max = barStyle.heightMax)
-                                    .padding(xValueStyle.margin), //.width(barStyle.heightMax),
-                                shape = RoundedCornerShape(xValueStyle.bgRadius),
-                                color = xValueStyle.bgColor(dataItem, parsedItem, range),
+                                    .heightIn(max = style.bar.heightMax)
+                                    .padding(style.xValue.margin),
+                                shape = RoundedCornerShape(style.xValue.bgRadius),
+                                color = style.xValue.bgColor(dataItem, parsedItem, range()),
                             ) {
                                 Text(
                                     modifier = Modifier
-                                        .padding(xValueStyle.padding),
-                                    text = xValueStyle.format(dataItem, parsedItem, range),
-                                    color = xValueStyle.color(dataItem, parsedItem, range),
-                                    fontSize = xValueStyle.fontSize,
-                                    fontWeight = xValueStyle.fontWeight
+                                        .padding(style.xValue.padding),
+                                    text = style.xValue.format(dataItem, parsedItem, range()),
+                                    color = style.xValue.color(dataItem, parsedItem, range()),
+                                    fontSize = style.xValue.fontSize,
+                                    fontWeight = style.xValue.fontWeight
                                 )
                             }
                         }
                     }
                 }
-                item { Spacer(modifier = Modifier.width(barStyle.width / 4)) }
             }
+            item { Spacer(modifier = Modifier.width(style.bar.width / 2)) }
         }
     }
 
@@ -257,8 +267,8 @@ fun <T> BarChart(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(barStyle.heightMax)
-            .background(bgColor)
+            .height(style.bar.heightMax)
+            .background(style.bgColor)
             .then(modifier),
     ) {
         scaleLines()
@@ -272,10 +282,8 @@ fun <T> BarChart(
 @Preview(showBackground = true)
 @Composable
 fun BarChartPreview() {
-    val ctx = LocalContext.current
     val data = (10 downTo 0).map { it.toFloat() }
     BarChart(
-        bgColor = Color(ctx.getColor(R.color.background)),
         parser = { BarData(it.toString(), it) },
         data = data
     )
