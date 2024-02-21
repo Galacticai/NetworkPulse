@@ -3,7 +3,7 @@
     <!-- Primary Colors -->
     <color name="primary">@color/galactic_blue_600</color>
     <color name="onPrimary">@color/galactic_blue_50</color>
-    <color name="primaryContainer">@color/galactic_blue_100</color>
+    <color name="primaryContainer">@color/galactic_blue_light_100</color>
     <color name="onPrimaryContainer">@color/galactic_blue_900</color>
 
     <!-- Secondary Colors -->
@@ -17,7 +17,7 @@
     <color name="onBackground">@color/galactic_blue_darker</color>
 
     <!-- Surface Colors -->
-    <color name="surface">@color/galactic_blue_light_100</color>
+    <color name="surface">@color/galactic_blue_100</color>
     <color name="onSurface">@color/galactic_blue_darker</color>
 
     <!-- Other Colors -->

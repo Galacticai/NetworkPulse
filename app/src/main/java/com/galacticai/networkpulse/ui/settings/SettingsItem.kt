@@ -76,7 +76,7 @@ open class SettingsItem(
     fun Content(itemPadding: PaddingValues) {
         if (grouped) Bones(itemPadding)
         else Surface(
-            color = colorResource(R.color.primaryContainer),
+            color = colorResource(R.color.surface),
             shape = RoundedCornerShape(20.dp),
         ) {
             Bones(itemPadding)

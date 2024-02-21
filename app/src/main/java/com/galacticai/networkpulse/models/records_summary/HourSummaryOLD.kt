@@ -1,9 +1,9 @@
-package com.galacticai.networkpulse.models
+package com.galacticai.networkpulse.models.records_summary
 
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import kotlin.math.max
 
-data class SpeedRecordSummary(
+data class HourSummaryOLD(
     val upAverage: Float,
     val downAverage: Float,
     val runtimeMSSuccessAverage: Long,
@@ -22,7 +22,8 @@ data class SpeedRecordSummary(
     val longestFailStreakMS: Long,
 ) {
     companion object {
-        fun summarize(records: List<SpeedRecord>): SpeedRecordSummary {
+
+        fun summarize(records: List<SpeedRecord>): HourSummaryOLD {
             var upTotal = 0f
             var downTotal = 0f
             var runtimeMSSuccessTotal = 0L
@@ -87,7 +88,7 @@ data class SpeedRecordSummary(
                 runtimeMSTimeoutAverage = 0
             }
 
-            return SpeedRecordSummary(
+            return HourSummaryOLD(
                 upAverage,
                 downAverage,
                 runtimeMSSuccessAverage,

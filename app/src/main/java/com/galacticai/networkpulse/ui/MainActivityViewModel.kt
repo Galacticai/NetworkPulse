@@ -15,9 +15,9 @@ import org.greenrobot.eventbus.EventBus
 
 class MainActivityViewModel : ViewModel() {
     lateinit var dao: SpeedRecordsDAO
-    var recentRecordsTime = Setting.RecentRecordsTime.defaultValue
+    private var recentRecordsTime = Setting.RecentRecordsTime.defaultValue
+    private var startedService: Boolean = false
     val recentRecords = MutableLiveData<List<SpeedRecord>>(emptyList())
-    var startedService: Boolean = false
 
     fun init(activity: MainActivity) {
         dao = LocalDatabase.getDBMainThread(activity).speedRecordsDAO()

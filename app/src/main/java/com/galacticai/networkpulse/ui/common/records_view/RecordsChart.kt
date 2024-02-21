@@ -17,10 +17,10 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.galacticai.networkpulse.R
-import com.galacticai.networkpulse.common.models.data_value.BitUnit
-import com.galacticai.networkpulse.common.models.data_value.BitUnitBase
-import com.galacticai.networkpulse.common.models.data_value.BitUnitExponent
-import com.galacticai.networkpulse.common.models.data_value.BitValue
+import com.galacticai.networkpulse.common.models.bit_value.BitUnit
+import com.galacticai.networkpulse.common.models.bit_value.BitUnitBase
+import com.galacticai.networkpulse.common.models.bit_value.BitUnitExponent
+import com.galacticai.networkpulse.common.models.bit_value.BitValue
 import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarChart
 import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarChartStyle
 import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarData
@@ -30,13 +30,15 @@ import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarStyle
 import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarValueStyle
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.models.settings.Setting
+import com.galacticai.networkpulse.ui.common.localized
 import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecordsChart(
+fun RecordRangeChart(
     modifier: Modifier = Modifier,
     records: List<SpeedRecord>,
+    onRecordDeleted: ((SpeedRecord) -> Unit)? = null,
     parser: ((SpeedRecord) -> BarData)? = null
 ) {
     val context = LocalContext.current
@@ -57,11 +59,14 @@ fun RecordsChart(
     val showDetailedRecord by remember(detailedRecord) { derivedStateOf { detailedRecord != null } }
     LaunchedEffect(showDetailedRecord) {
         if (showDetailedRecord) detailedState.show()
+        else detailedState.hide()
     }
     if (showDetailedRecord) {
-        ModalRecordDetails(state = detailedState, record = detailedRecord!!) {
-            detailedRecord = null
-        }
+        ModalRecordDetails(
+            state = detailedState,
+            record = detailedRecord!!,
+            onRecordDeleted = { onRecordDeleted?.invoke(detailedRecord!!) }
+        ) { detailedRecord = null }
     }
 
     BarChart(
@@ -89,13 +94,10 @@ fun RecordsChart(
                     Color(context.getColor(R.color.secondary))
                 },
                 format = { v, _, i ->
-                    val n = BitValue(
-                        v,
-                        BitUnit(BitUnitExponent.Binary.Kibi, BitUnitBase.Byte)
-                    ).toNearestUnit()
+                    val n = BitValue(v, BitUnit(BitUnitExponent.Metric.Kilo, BitUnitBase.Byte))
+                        .toNearestUnit()
                     "${n.value.toInt()}" +
-                            if (i == graphScaleLinesCount)
-                                " ${n.unit.name.short}/${context.getString(R.string.second_suffix)}"
+                            if (i == graphScaleLinesCount) "\u2009${n.unit.name.short}/${context.getString(R.string.second_suffix)}"
                             else ""
                 },
             ),
@@ -118,18 +120,15 @@ fun RecordsChart(
         ),
         parser = parser ?: {
             val unit = TimeUnit.MILLISECONDS
-            val m = unit.toMinutes(it.time) % 60
-            val s = unit.toSeconds(it.time) % 60
-            val msSuffix = context.getString(R.string.millisecond_suffix)
+            val m = (unit.toMinutes(it.time) % 60).localized()
+            val s = (unit.toSeconds(it.time) % 60).localized()
             val mSuffix = context.getString(R.string.minute_suffix)
             val sSuffix = context.getString(R.string.second_suffix)
-            val label = "${m}${mSuffix} ${s}${sSuffix} (${it.runtimeMS}$msSuffix)"
+            val label = "$m$mSuffix $s$sSuffix"
             val value = it.down ?: 0f
             BarData(label, value)
         },
         onBarClick = { record, _, _ -> detailedRecord = record },
         data = records
     )
-
-
 }

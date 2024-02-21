@@ -10,10 +10,10 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.galacticai.networkpulse.common.models.Jsonable
-import com.galacticai.networkpulse.common.models.data_value.BitUnit
-import com.galacticai.networkpulse.common.models.data_value.BitUnitBase
-import com.galacticai.networkpulse.common.models.data_value.BitUnitExponent
-import com.galacticai.networkpulse.common.models.data_value.ShortLongName
+import com.galacticai.networkpulse.common.models.bit_value.BitUnit
+import com.galacticai.networkpulse.common.models.bit_value.BitUnitBase
+import com.galacticai.networkpulse.common.models.bit_value.BitUnitExponent
+import com.galacticai.networkpulse.common.models.bit_value.ShortLongName
 import com.galacticai.networkpulse.ui.main.screens.dataStore
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map

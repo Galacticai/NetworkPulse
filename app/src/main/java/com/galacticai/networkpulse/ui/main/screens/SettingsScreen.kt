@@ -37,8 +37,8 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.await
-import com.galacticai.networkpulse.common.models.data_value.BitUnitBase
-import com.galacticai.networkpulse.common.models.data_value.BitValue
+import com.galacticai.networkpulse.common.models.bit_value.BitUnitBase
+import com.galacticai.networkpulse.common.models.bit_value.BitValue
 import com.galacticai.networkpulse.common.openURL
 import com.galacticai.networkpulse.common.restartApp
 import com.galacticai.networkpulse.common.ui.CustomDropdownMenu
@@ -78,7 +78,7 @@ fun SettingsScreen() {
                 )
             }
         }
-        val primaryContainer = colorResource(R.color.primaryContainer)
+        val primaryContainer = colorResource(R.color.surface)
         Surface(
             modifier = Modifier.padding(horizontal = 10.dp),
             color = primaryContainer,

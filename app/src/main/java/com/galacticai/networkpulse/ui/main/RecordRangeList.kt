@@ -6,9 +6,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -27,8 +29,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -36,59 +42,80 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
+import com.galacticai.networkpulse.common.atStartOfDayMS
+import com.galacticai.networkpulse.common.atStartOfHourMS
+import com.galacticai.networkpulse.common.models.bit_value.BitUnit
+import com.galacticai.networkpulse.common.models.bit_value.BitUnitBase
+import com.galacticai.networkpulse.common.models.bit_value.BitUnitExponent
+import com.galacticai.networkpulse.common.models.bit_value.BitValue
 import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarData
 import com.galacticai.networkpulse.databse.models.SpeedRecord
-import com.galacticai.networkpulse.ui.common.records_view.RecordsView
+import com.galacticai.networkpulse.ui.common.durationSuffixes
+import com.galacticai.networkpulse.ui.common.localized
+import com.galacticai.networkpulse.ui.common.localizedDot
+import com.galacticai.networkpulse.ui.common.records_view.record_range.RecordRangeView
 import java.text.SimpleDateFormat
-import java.util.Calendar
+import java.time.ZoneId
 import java.util.Locale
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
-fun RecordsList(
+fun RecordRangeList(
     modifier: Modifier = Modifier,
     records: List<SpeedRecord>,
-    reversed: Boolean = false
+    reversed: Boolean = false,
+    onRecordDeleted: ((SpeedRecord) -> Unit)? = null,
 ) {
     Surface(
-        color = colorResource(R.color.primaryContainer),
+        color = colorResource(R.color.surface),
         shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(2.dp, colorResource(R.color.primaryContainer)),
+        border = BorderStroke(2.dp, colorResource(R.color.surface)),
         modifier = Modifier
-            .padding(top = 10.dp)
             .graphicsLayer(clip = true)
             .then(modifier)
     ) {
+        val zoneId = ZoneId.systemDefault()
         val recordsInOrder = if (reversed) records.reversed() else records
-        LazyColumn(modifier = Modifier.fillMaxWidth()) { // Group records by day
-            val groupedByDay = recordsInOrder.groupBy { record ->
-                val calendar = Calendar.getInstance()
-                calendar.timeInMillis = record.time
-                calendar[Calendar.DAY_OF_YEAR] // You can use Calendar.DAY_OF_MONTH for day of the month instead
-            }
-            val firstDay = groupedByDay.keys.first()
-            groupedByDay.forEach { (day, dayRecords) ->
-                if (day != firstDay)
-                    item { Spacer(modifier = Modifier.height(20.dp)) }
-                val groupedByHour = dayRecords.groupBy { record ->
-                    val calendar = Calendar.getInstance()
-                    calendar.timeInMillis = record.time
-                    calendar[Calendar.HOUR_OF_DAY]
-                }
-                stickyHeader {
-                    DayHeader(day, dayRecords, groupedByHour)
-                }
 
+        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            val groupedByDay = recordsInOrder.groupBy { record -> record.time.atStartOfDayMS(zoneId) }
+            var addSpace = false
+            groupedByDay.forEach { (day, dayRecords) ->
+                if (addSpace)
+                    item { Spacer(modifier = Modifier.height(20.dp)) }
+                val groupedByHour = dayRecords.groupBy { record -> record.time.atStartOfHourMS(zoneId) }
+                stickyHeader { DayHeader(day, groupedByHour) }
 
                 groupedByHour.forEach { (hour, hourRecords) ->
-                    stickyHeader { HourHeader(hour, hourRecords.size) }
+                    //stickyHeader { HourHeader(hour, hourRecords) }
                     item {
-                        RecordsView(
-                            modifier = Modifier.padding(horizontal = 2.dp),
-                            records = hourRecords.reversed()
-                        )
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(2.dp)
+                                .height(40.dp),
+                        ) {
+                            RecordRangeView(
+                                modifier = Modifier.padding(horizontal = 2.dp),
+                                records = hourRecords.reversed(),
+                                onRecordDeleted = onRecordDeleted,
+                            )
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(20.dp)
+                                    .height(40.dp)
+                                    .pointerInteropFilter { false },
+                                color = colorResource(R.color.surface).copy(.85f),
+                                contentColor = colorResource(R.color.primary),
+                                shape = RoundedCornerShape(20.dp),
+                                shadowElevation = 10.dp,
+                            ) { HourHeader(hour, hourRecords) }
+                        }
                     }
                 }
+                if (!addSpace) addSpace = true
             }
         }
     }
@@ -96,7 +123,7 @@ fun RecordsList(
 
 
 @Composable
-fun DayHeader(day: Int, dayRecords: List<SpeedRecord>, groupedByHour: Map<Int, List<SpeedRecord>>) {
+fun DayHeader(dayMS: Long, groupedByHour: Map<Long, List<SpeedRecord>>) {
     var showSummary by remember { mutableStateOf(true) }
 
     Surface(
@@ -120,9 +147,7 @@ fun DayHeader(day: Int, dayRecords: List<SpeedRecord>, groupedByHour: Map<Int, L
                     Text(
                         text = SimpleDateFormat(
                             "EEEE dd/MM/yyyy", Locale.getDefault()
-                        ).format(
-                            Calendar.getInstance().apply { set(Calendar.DAY_OF_YEAR, day) }.time
-                        ),
+                        ).format(dayMS),
                         modifier = Modifier.weight(1f),
                         fontSize = 12.sp,
                         letterSpacing = .2f.sp,
@@ -143,8 +168,9 @@ fun DayHeader(day: Int, dayRecords: List<SpeedRecord>, groupedByHour: Map<Int, L
                         SpeedRecord.average(hourRecords)
                     }
                     Spacer(modifier = Modifier.height(10.dp))
-                    RecordsView(
+                    RecordRangeView(
                         records = hourlyAverage.reversed(),
+                        hourly = false,
                         parser = { record ->
                             val label = SimpleDateFormat("h a", Locale.getDefault())
                                 .format(record.time) + " - ${record.runtimeMS}ms"
@@ -158,37 +184,49 @@ fun DayHeader(day: Int, dayRecords: List<SpeedRecord>, groupedByHour: Map<Int, L
 }
 
 @Composable
-fun HourHeader(hour: Int, recordsCount: Int) {
-    val hourText = SimpleDateFormat(
-        "h a", Locale.getDefault()
-    ).format(
-        Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, hour)
-        }.time
-    )
+fun HourHeader(hourMS: Long, records: List<SpeedRecord>) {
+    val hourText = SimpleDateFormat("h a", Locale.getDefault())
+        .format(hourMS)
 
-    Surface(
-        color = colorResource(R.color.primaryContainer),
-        contentColor = colorResource(R.color.primary),
-        shape = RoundedCornerShape(20.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(40.dp),
+    val maxValue = records.maxBy { it.down ?: 0f }.down
+    val max = if (maxValue == null) null
+    else BitValue(maxValue, BitUnit(BitUnitExponent.Metric.Kilo, BitUnitBase.Byte))
+        .toNearestUnit()
+
+
+    Row(
+        modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
-        ) {
+        Text(
+            text = hourText,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.weight(1f))
+
+        if (max != null) {
             Text(
-                text = hourText,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                "$recordsCount ${stringResource(R.string.records)}",
-                fontSize = 14.sp,
+                text = stringResource(R.string.maximum) +
+                        ": " +
+                        max.value.localizedDot(2) +
+                        ' ' + max.unit.name.short +
+                        '/' + durationSuffixes(LocalContext.current).seconds,
+                color = colorResource(R.color.primary),
                 fontWeight = FontWeight.Light,
+                fontSize = 12.sp,
+                letterSpacing = .2f.sp,
+            )
+            Text(
+                " — ",
+                fontWeight = FontWeight.Light,
+                fontSize = 12.sp,
+                color = colorResource(R.color.primary).copy(.5f),
             )
         }
+        Text(
+            "${records.size.localized()} ${stringResource(R.string.records)}",
+            fontSize = 12.sp,
+        )
     }
 }

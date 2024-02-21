@@ -31,7 +31,7 @@ fun HourGraph(data: CubicChartData) {
     Surface(
         color = colorResource(R.color.background),
         shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.dp, colorResource(R.color.primaryContainer)),
+        border = BorderStroke(1.dp, colorResource(R.color.surface)),
     ) {
         CubicChart(
             modifier = Modifier

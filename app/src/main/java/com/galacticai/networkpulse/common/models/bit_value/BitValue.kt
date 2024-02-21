@@ -1,4 +1,4 @@
-package com.galacticai.networkpulse.common.models.data_value
+package com.galacticai.networkpulse.common.models.bit_value
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -7,14 +7,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import java.text.NumberFormat
 import kotlin.math.abs
 
 open class BitValue(
     val value: Float,
     val unit: BitUnit
 ) {
-    fun toString(maxDecimalPlaces: Int): String {
-        val formatted = String.format("%.${maxDecimalPlaces}f", value)
+    fun toString(maxFractionDigits: Int): String {
+        val formatted = NumberFormat.getInstance().apply {
+            maximumFractionDigits = maxFractionDigits
+        }.format(value)
         return "$formatted ${name.short}"
     }
 

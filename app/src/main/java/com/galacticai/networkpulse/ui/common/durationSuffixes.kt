@@ -5,7 +5,6 @@ import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.DateSuffixes
 
 fun durationSuffixes(context: Context) = DateSuffixes(
-    years = context.getString(R.string.year_suffix),
     months = context.getString(R.string.month_suffix),
     days = context.getString(R.string.day_suffix),
     hours = context.getString(R.string.hour_suffix),

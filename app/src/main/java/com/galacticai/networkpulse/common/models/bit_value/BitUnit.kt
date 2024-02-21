@@ -1,4 +1,4 @@
-package com.galacticai.networkpulse.common.models.data_value
+package com.galacticai.networkpulse.common.models.bit_value
 
 open class BitUnit(val exponent: BitUnitExponent, val base: BitUnitBase) {
     val name

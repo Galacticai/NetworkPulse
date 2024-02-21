@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -28,12 +29,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.format
-import com.galacticai.networkpulse.common.models.data_value.BitUnit
-import com.galacticai.networkpulse.common.models.data_value.BitUnitBase
-import com.galacticai.networkpulse.common.models.data_value.BitUnitExponent
-import com.galacticai.networkpulse.common.models.data_value.BitValue
+import com.galacticai.networkpulse.common.models.bit_value.BitUnit
+import com.galacticai.networkpulse.common.models.bit_value.BitUnitBase
+import com.galacticai.networkpulse.common.models.bit_value.BitUnitExponent
+import com.galacticai.networkpulse.common.models.bit_value.BitValue
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.ui.common.durationSuffixes
+import com.galacticai.networkpulse.ui.common.localized
+import com.galacticai.networkpulse.ui.common.localizedDot
 import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
@@ -68,10 +71,6 @@ private fun Header(record: SpeedRecord) {
             statusLabel = stringResource(R.string.successAdjective)
             statusColor = colorResource(R.color.onSuccessContainer)
             statusColorBG = colorResource(R.color.successContainer)
-        } else if (record.isTimeout) {
-            statusLabel = stringResource(R.string.timeout)
-            statusColor = colorResource(R.color.onWarningContainer)
-            statusColorBG = colorResource(R.color.warningContainer)
         } else {
             statusLabel = stringResource(R.string.failAdjective)
             statusColor = colorResource(R.color.onErrorContainer)
@@ -111,7 +110,7 @@ private fun Header(record: SpeedRecord) {
 
 @Composable
 private fun Body(record: SpeedRecord, bodyBG: Color) {
-    val primaryContainer = colorResource(R.color.primaryContainer)
+    val primaryContainer = colorResource(R.color.surface)
     Surface(
         shape = RoundedCornerShape(20.dp),
         border = BorderStroke(1.dp, primaryContainer),
@@ -122,7 +121,7 @@ private fun Body(record: SpeedRecord, bodyBG: Color) {
             modifier = Modifier.padding(5.dp),
         ) {
             @Composable
-            fun row(content: @Composable () -> Unit) {
+            fun row(content: @Composable RowScope.() -> Unit) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
@@ -131,7 +130,7 @@ private fun Body(record: SpeedRecord, bodyBG: Color) {
             }
 
             @Composable
-            fun stat(
+            fun RowScope.stat(
                 title: String, value: String,
                 color: Color = colorResource(R.color.primary)
             ) {
@@ -164,8 +163,8 @@ private fun Body(record: SpeedRecord, bodyBG: Color) {
             fun formatDuration(time: Long) = time.milliseconds.format(
                 durationSuffixes,
                 joint = " ",
-                partsCount = 2,
-            )
+                partsCount = 2
+            ) { it.localized() }
             row {
                 val locale = Locale.getDefault()
                 val date = SimpleDateFormat("dd/MM/yyyy\nEEEE", locale)
@@ -173,49 +172,44 @@ private fun Body(record: SpeedRecord, bodyBG: Color) {
                 val time = SimpleDateFormat("h:mm:ss\na", locale)
                     .format(record.time)
                 val timeRelative = formatDuration(System.currentTimeMillis() - record.time) +
-                        '\n' + stringResource(R.string.time_ago)
+                        "\n${stringResource(R.string.time_ago)}"
 
                 stat(stringResource(R.string.date), date)
                 stat(stringResource(R.string.time), time)
                 stat(stringResource(R.string.relative_time), timeRelative)
             }
 
-            @Composable
-            fun duration() = stat(
-                stringResource(R.string.duration),
-                formatDuration(record.runtimeMS.toLong())
-            )
-
-            @Composable
-            fun speed(v: String) = stat(stringResource(R.string.speed), v)
-
-            @Composable
-            fun size(v: String) = stat(stringResource(R.string.size), v)
             row {
                 val speedValue: String
                 val sizeValue: String
+                val color: Color
+                val durationValue = formatDuration(record.runtimeMS.toLong())
+
                 if (record.isSuccess) {
+                    color = Color.Unspecified
                     val downSpeed = BitValue(
                         record.down!!,
                         BitUnit(BitUnitExponent.Metric.Kilo, BitUnitBase.Byte)
                     ).toNearestUnit()
                     //val up = BitValue(record.up!!, unit).toNearestUnit()
-                    val downSpeedString = String.format("%.2f", downSpeed.value)
+                    val downSpeedString = downSpeed.value.localizedDot(2)
                     val perSecond = "/${durationSuffixes.seconds}"
 
                     val downSize = BitValue(record.downSize, downSpeed.unit).toNearestUnit()
-                    val downSizeString = String.format("%.2f", downSize.value)
+                    val downSizeString = downSize.value.localizedDot(2)
 
                     speedValue = "$downSpeedString\n${downSpeed.unit}$perSecond"
                     sizeValue = "$downSizeString\n${downSize.unit}"
                 } else {
+                    color = colorResource(R.color.error)
                     val failed = "[ ${stringResource(R.string.failed)} ]"
                     speedValue = failed
                     sizeValue = failed
                 }
-                duration()
-                speed(speedValue)
-                size(sizeValue)
+
+                stat(stringResource(R.string.duration), durationValue)
+                stat(stringResource(R.string.speed), speedValue, color)
+                stat(stringResource(R.string.size), sizeValue, color)
             }
         }
     }
@@ -230,12 +224,6 @@ private fun RecordDetailsPreview1() {
 
 @Preview(showBackground = true)
 @Composable
-private fun RecordDetailsPreview2() {
-    RecordDetails(SpeedRecord.Timeout(System.currentTimeMillis() - 55, 2800))
-}
-
-@Preview(showBackground = true)
-@Composable
 private fun RecordDetailsPreview3() {
-    RecordDetails(SpeedRecord.Error(System.currentTimeMillis() - 55, 2800))
+    RecordDetails(SpeedRecord.error(System.currentTimeMillis() - 55, 2800))
 }

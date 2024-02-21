@@ -103,4 +103,16 @@
     <string name="speed">Speed</string>
     <string name="size">Size</string>
     <string name="record_details">Record details</string>
+    <string name="pick_a_day">Pick a day</string>
+    <string name="of">of</string>
+    <string name="delete">Delete</string>
+    <string name="are_you_sure">Are you sure?</string>
+    <string name="delete_record">Delete record</string>
+    <string name="no_records">No records</string>
+    <string name="average">Average</string>
+    <string name="maximum">Maximum</string>
+    <string name="minimum">Minimum</string>
+    <string name="download_noun">Download</string>
+    <string name="upload_noun">Upload</string>
+    <string name="more_details">More details…</string>
 </resources>

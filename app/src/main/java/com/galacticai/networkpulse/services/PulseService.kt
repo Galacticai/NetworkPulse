@@ -9,6 +9,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.IBinder
 import android.util.Log
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -71,8 +73,8 @@ class PulseService : Service() {
         }
     }
 
-    private var interval = Setting.RequestInterval.defaultValue
-    private var downloadSize = Setting.DownloadSize.defaultObject
+    private var interval = mutableLongStateOf(Setting.RequestInterval.defaultValue)
+    private var downloadSize = mutableStateOf(Setting.DownloadSize.defaultObject)
     private lateinit var timer: Timer
     private lateinit var client: OkHttpClient
 
@@ -82,15 +84,14 @@ class PulseService : Service() {
     private lateinit var notification: Notification
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-
         runBlocking {
-            interval = Setting.RequestInterval.get(this@PulseService)
-            downloadSize = Setting.DownloadSize.getObject(this@PulseService)
+            interval.longValue = Setting.RequestInterval.get(this@PulseService)
+            downloadSize.value = Setting.DownloadSize.getObject(this@PulseService)
         }
 
         val ms = TimeUnit.MILLISECONDS
         client = OkHttpClient.Builder()
-            .connectTimeout(interval, ms)
+            .connectTimeout(interval.longValue, ms)
             //            .callTimeout(interval, ms)
             //            .readTimeout(interval, ms)
             .build()
@@ -121,13 +122,13 @@ class PulseService : Service() {
     }
 
     private fun initTimer() {
-        this.timer = timer("PulseServiceTimer", false, 0, interval) {
+        this.timer = timer("PulseServiceTimer", false, 0, interval.longValue) {
             queue.addRunRoll(
                 System.currentTimeMillis(),
-                Duration.ofMillis(interval)
+                Duration.ofMillis(interval.longValue)
             ) {
                 Log.d("PulseService", "Running request")
-                val req = Request.Builder().url(downloadSize.url).build()
+                val req = Request.Builder().url(downloadSize.value.url).build()
                 val call = client.newCall(req)
                 return@addRunRoll call.execute()
             }
@@ -196,7 +197,7 @@ class PulseService : Service() {
         val record =
             SpeedRecord(
                 ev.key,
-                SpeedRecord.Status.Timeout.toInt(),
+                SpeedRecord.SpeedRecordStatus.Timeout.toInt(),
                 ev.timeout.toMillis().toInt(),
                 null,
                 null
@@ -212,7 +213,7 @@ class PulseService : Service() {
         //? the rest are accidental and should be fixed
         if (ev.error !is IOException) throw ev.error
 
-        val record = SpeedRecord.Error(ev.key, ev.runtime.toMillis().toInt())
+        val record = SpeedRecord.error(ev.key, ev.runtime.toMillis().toInt())
         LocalDatabase.getDB(this).apply {
             speedRecordsDAO().insert(record)
         }.close()

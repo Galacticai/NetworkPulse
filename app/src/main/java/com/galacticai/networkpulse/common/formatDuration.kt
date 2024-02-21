@@ -4,7 +4,6 @@ import java.util.Calendar
 import kotlin.time.Duration
 
 open class DateSuffixes(
-    val years: String,
     val months: String,
     val days: String,
     val hours: String,
@@ -14,7 +13,6 @@ open class DateSuffixes(
 ) {
     /** Map of [Calendar] fields to [DateSuffixes] */
     val ofCalendar = mapOf(
-        Calendar.YEAR to years,
         Calendar.MONTH to months,
         Calendar.DAY_OF_MONTH to days,
         Calendar.HOUR_OF_DAY to hours,
@@ -22,9 +20,8 @@ open class DateSuffixes(
         Calendar.SECOND to seconds,
         Calendar.MILLISECOND to milliseconds
     )
-    
+
     data object Default : DateSuffixes(
-        years = "y",
         months = "mo",
         days = "d",
         hours = "h",
@@ -32,28 +29,32 @@ open class DateSuffixes(
         seconds = "s",
         milliseconds = "ms",
     )
-
 }
 
+/** Format a [Duration] into a string with [suffixes]
+ * - ⚠️ Month = 30 days
+ * - Example: `1y, 2mo, 3d ..`
+ *
+ * @param suffixes Time suffixes
+ * @param joint Parts separator
+ * @param partsCount Max number of parts to return
+ * @param valueFormat Format the value of each part (Useful for localization)
+ */
 fun Duration.format(
     suffixes: DateSuffixes = DateSuffixes.Default,
     joint: String = ", ",
-    /** Max number of parts to return
-     *
-     * Example:
-     * - 2 parts would return "2d, 1h"
-     * - 3 parts would return "2d, 1h, 1m"*/
     partsCount: Int = Int.MAX_VALUE,
+    valueFormat: (Int) -> String = { it.toString() }
 ): String = listOf(
-    inWholeDays / 30 to suffixes.months,
-    inWholeDays % 30 to suffixes.days,
-    inWholeHours % 24 to suffixes.hours,
-    inWholeMinutes % 60 to suffixes.minutes,
-    inWholeSeconds % 60 to suffixes.seconds,
-    inWholeMilliseconds % 1000 to suffixes.milliseconds
+    (inWholeDays / 30).toInt() to suffixes.months,
+    (inWholeDays % 30).toInt() to suffixes.days,
+    (inWholeHours % 24).toInt() to suffixes.hours,
+    (inWholeMinutes % 60).toInt() to suffixes.minutes,
+    (inWholeSeconds % 60).toInt() to suffixes.seconds,
+    (inWholeMilliseconds % 1000).toInt() to suffixes.milliseconds
 )
     .filter { it.first > 0 }
     .take(partsCount)
     .joinToString(joint) {
-        "${it.first}${it.second}"
+        "${valueFormat(it.first)}${it.second}"
     }

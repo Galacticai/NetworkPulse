@@ -63,6 +63,9 @@ interface SpeedRecordsDAO {
     @Delete
     fun delete(vararg record: SpeedRecord)
 
+    @Query("DELETE FROM logs WHERE time IN (:times)")
+    fun delete(vararg times: Long)
+
     @Query("DELETE FROM logs WHERE time < :time")
     fun deleteOlderThan(time: Long)
 

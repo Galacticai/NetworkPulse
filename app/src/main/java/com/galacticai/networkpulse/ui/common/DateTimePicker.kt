@@ -83,7 +83,7 @@ fun DateTimePicker(
         }
         CustomTabRow(
             insetPadding = 5.dp,
-            containerColor = colorResource(R.color.primaryContainer),
+            containerColor = colorResource(R.color.surface),
             selectedContainerColor = colorResource(R.color.background),
             items = listOf<@Composable (Boolean) -> Unit>(
                 { tabContent(it, FaIcons.Clock, stringResource(R.string.date)) },

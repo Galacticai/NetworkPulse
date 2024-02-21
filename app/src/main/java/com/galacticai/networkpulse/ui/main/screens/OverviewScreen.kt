@@ -24,8 +24,8 @@ import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarData
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.ui.MainActivity
 import com.galacticai.networkpulse.ui.common.AppTitle
-import com.galacticai.networkpulse.ui.common.records_view.RecordsChart
-import com.galacticai.networkpulse.ui.common.records_view.RecordsSummary
+import com.galacticai.networkpulse.ui.common.records_view.RecordRangeChart
+import com.galacticai.networkpulse.ui.common.records_view.record_range.RecordRangeView
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -52,8 +52,8 @@ fun OverviewScreen() {
         AnimatedVisibility(visible = recentRecords.isNotEmpty()) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = colorResource(R.color.background),
-                border = BorderStroke(2.dp, colorResource(R.color.primaryContainer)),
+                color = colorResource(R.color.surface),
+                border = BorderStroke(2.dp, colorResource(R.color.surface)),
                 shape = RoundedCornerShape(20.dp),
             ) {
                 Column(
@@ -61,19 +61,22 @@ fun OverviewScreen() {
                         .fillMaxWidth()
                         .padding(2.dp)
                 ) {
-                    RecordsChart(
+                    RecordRangeChart(
                         records = recentRecords,
-                        parser = {
-                            val timestamp = SimpleDateFormat("h:mm:ss a", Locale.getDefault())
-                                .format(it.time)
-                            val label =
-                                "$timestamp (${it.runtimeMS}${mainActivity.getString(R.string.millisecond_suffix)})"
-                            val value = it.down ?: 0f
-                            BarData(label, value)
+                        onRecordDeleted = {
+                            val list = mainActivity.viewModel.recentRecords.value
+                                .orEmpty().toMutableList()
+                            list.remove(it)
+                            mainActivity.viewModel.recentRecords.value = list
                         }
-                    )
+                    ) {
+                        val timestamp = SimpleDateFormat("h:mm:ss a", Locale.getDefault())
+                            .format(it.time)
+                        val value = it.down ?: 0f
+                        BarData(timestamp, value)
+                    }
                     Spacer(modifier = Modifier.height(10.dp))
-                    RecordsSummary(records = recentRecords)
+                    RecordRangeView(records = recentRecords)
                 }
             }
         }

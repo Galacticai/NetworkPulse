@@ -28,7 +28,7 @@ fun MainNavigation(controller: NavHostController) {
         modifier = Modifier.padding(10.dp),
     ) {
         NavigationBar(
-            containerColor = colorResource(R.color.primaryContainer),
+            containerColor = colorResource(R.color.surface),
         ) {
             for (screen in MainScreen.entries) {
                 val label = stringResource(screen.labelID)

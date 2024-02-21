@@ -1,10 +1,10 @@
 package com.galacticai.networkpulse.models
 
 import com.galacticai.networkpulse.common.models.Jsonable
-import com.galacticai.networkpulse.common.models.data_value.BitUnit
-import com.galacticai.networkpulse.common.models.data_value.BitUnitBase
-import com.galacticai.networkpulse.common.models.data_value.BitUnitExponent
-import com.galacticai.networkpulse.common.models.data_value.BitValue
+import com.galacticai.networkpulse.common.models.bit_value.BitUnit
+import com.galacticai.networkpulse.common.models.bit_value.BitUnitBase
+import com.galacticai.networkpulse.common.models.bit_value.BitUnitExponent
+import com.galacticai.networkpulse.common.models.bit_value.BitValue
 import org.json.JSONObject
 
 //? Yes this is like enum but custom

@@ -71,7 +71,7 @@ private fun PrepareActivityContent() {
             }, bottomBar = {
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = colorResource(R.color.primaryContainer),
+                    color = colorResource(R.color.surface),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(10.dp)
@@ -92,7 +92,7 @@ private fun PrepareActivityContent() {
         ) { scaffoldPadding ->
             Surface(
                 color = colorResource(R.color.background),
-                border = BorderStroke(2.dp, colorResource(R.color.primaryContainer)),
+                border = BorderStroke(2.dp, colorResource(R.color.surface)),
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier
                     .padding(horizontal = 10.dp)
@@ -102,7 +102,7 @@ private fun PrepareActivityContent() {
                     items(requiredInitsList.size) {
                         if (it > 0) {
                             Divider(
-                                color = colorResource(R.color.primaryContainer),
+                                color = colorResource(R.color.surface),
                                 modifier = Modifier.padding(horizontal = 20.dp),
                             )
                         }
@@ -179,7 +179,7 @@ private fun PrepareActivityDefaultPreview() {
             }, bottomBar = {
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = colorResource(R.color.primaryContainer),
+                    color = colorResource(R.color.surface),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(10.dp)
@@ -200,7 +200,7 @@ private fun PrepareActivityDefaultPreview() {
         ) { scaffoldPadding ->
             Surface(
                 color = colorResource(R.color.background),
-                border = BorderStroke(2.dp, colorResource(R.color.primaryContainer)),
+                border = BorderStroke(2.dp, colorResource(R.color.surface)),
                 shape = RoundedCornerShape(20.dp),
                 modifier = Modifier
                     .padding(horizontal = 10.dp)
@@ -210,7 +210,7 @@ private fun PrepareActivityDefaultPreview() {
                     items(requiredInits.size) {
                         if (it > 0) {
                             Divider(
-                                color = colorResource(R.color.primaryContainer),
+                                color = colorResource(R.color.surface),
                                 modifier = Modifier.padding(horizontal = 20.dp),
                             )
                         }
