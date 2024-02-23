@@ -80,6 +80,6 @@ fun RowScope.Filler() = Spacer(Modifier.weight(1f))
 private fun formatDateTime(stamp: Long, pattern: String): String =
     SimpleDateFormat(pattern, Locale.getDefault()).format(stamp)
 
-fun format(stamp: Long): String = formatDateTime(stamp, "dd/MM/yyyy\nEEEE")
+fun formatDate(stamp: Long): String = formatDateTime(stamp, "dd/MM/yyyy\nEEEE")
 fun formatTime(stamp: Long): String = formatDateTime(stamp, "h:mm:ss\na")
 
