@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.databse.LocalDatabase
 import com.galacticai.networkpulse.databse.models.SpeedRecord
+import com.galacticai.networkpulse.databse.models.SpeedRecordUtils
 import kotlinx.coroutines.runBlocking
 
 
@@ -119,7 +120,7 @@ private fun ModalRecordDetailsPreview1() {
     val state = rememberModalBottomSheetState()
     ModalRecordDetails(
         state = state,
-        record = SpeedRecord.Success(System.currentTimeMillis(), 2800, 43.02132f, 210.91234f)
+        record = SpeedRecordUtils.success(System.currentTimeMillis(), 2800, 43.02132f, 210.91234f)
     ) {}
     runBlocking { state.show() }
 }
@@ -131,7 +132,7 @@ private fun ModalRecordDetailsPreview2() {
     val state = rememberModalBottomSheetState()
     ModalRecordDetails(
         state = state,
-        record = SpeedRecord.timeout(System.currentTimeMillis(), 2800)
+        record = SpeedRecordUtils.timeout(System.currentTimeMillis(), 2800)
     ) {}
     runBlocking { state.show() }
 }
@@ -143,7 +144,7 @@ private fun ModalRecordDetailsPreview3() {
     val state = rememberModalBottomSheetState()
     ModalRecordDetails(
         state = state,
-        record = SpeedRecord.error(System.currentTimeMillis(), 2800)
+        record = SpeedRecordUtils.error(System.currentTimeMillis(), 2800)
     ) {}
     runBlocking { state.show() }
 }

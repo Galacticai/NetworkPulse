@@ -1,6 +1,9 @@
 package com.galacticai.networkpulse.models.records_summary
 
 import com.galacticai.networkpulse.databse.models.SpeedRecord
+import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.isError
+import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.isSuccess
+import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.isTimeout
 import kotlin.math.max
 
 data class HourSummaryOLD(

@@ -29,6 +29,7 @@ import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarScrollButtonS
 import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarStyle
 import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarValueStyle
 import com.galacticai.networkpulse.databse.models.SpeedRecord
+import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.isSuccess
 import com.galacticai.networkpulse.models.settings.Setting
 import com.galacticai.networkpulse.ui.common.localized
 import java.util.concurrent.TimeUnit

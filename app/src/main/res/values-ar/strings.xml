@@ -115,4 +115,6 @@
     <string name="download_noun">التنزيل</string>
     <string name="upload_noun">الرفع</string>
     <string name="more_details">المزيد من التفاصيل…</string>
+    <string name="missingAdjective">غير موجود</string>
+    <string name="records_count">عدد السجلات</string>
 </resources>

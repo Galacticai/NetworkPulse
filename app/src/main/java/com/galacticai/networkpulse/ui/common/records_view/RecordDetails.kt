@@ -34,6 +34,9 @@ import com.galacticai.networkpulse.common.models.bit_value.BitUnitBase
 import com.galacticai.networkpulse.common.models.bit_value.BitUnitExponent
 import com.galacticai.networkpulse.common.models.bit_value.BitValue
 import com.galacticai.networkpulse.databse.models.SpeedRecord
+import com.galacticai.networkpulse.databse.models.SpeedRecordUtils
+import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.downSize
+import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.isSuccess
 import com.galacticai.networkpulse.ui.common.durationSuffixes
 import com.galacticai.networkpulse.ui.common.localized
 import com.galacticai.networkpulse.ui.common.localizedDot
@@ -90,7 +93,7 @@ private fun Header(record: SpeedRecord) {
         )
         Surface(
             modifier = Modifier.padding(2.dp),
-            border = BorderStroke(1.dp, statusColor),
+            border = BorderStroke(1.dp, statusColor.copy(.5f)),
             color = statusColorBG,
             shape = CircleShape,
             shadowElevation = 5.dp,
@@ -132,7 +135,7 @@ private fun Body(record: SpeedRecord, bodyBG: Color) {
             @Composable
             fun RowScope.stat(
                 title: String, value: String,
-                color: Color = colorResource(R.color.primary)
+                color: Color = Color.Unspecified
             ) {
                 Column(
                     modifier = Modifier
@@ -144,12 +147,12 @@ private fun Body(record: SpeedRecord, bodyBG: Color) {
                         text = title,
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center,
+                        color = colorResource(R.color.secondary)
                     )
                     Divider(
-                        modifier = Modifier
-                            .widthIn(max = 50.dp)
-                            .padding(vertical = 1.dp),
-                        color = primaryContainer, thickness = 1.dp
+                        modifier = Modifier.padding(vertical = 1.dp),
+                        color = primaryContainer,
+                        thickness = 1.dp
                     )
                     Text(
                         if (value.contains('\n')) value else "$value\n",
@@ -219,11 +222,11 @@ private fun Body(record: SpeedRecord, bodyBG: Color) {
 @Preview(showBackground = true)
 @Composable
 private fun RecordDetailsPreview1() {
-    RecordDetails(SpeedRecord.Success(System.currentTimeMillis() - 55, 2000, 43.02132f, 210.91234f))
+    RecordDetails(SpeedRecordUtils.success(System.currentTimeMillis() - 55, 2000, 43.02132f, 210.91234f))
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun RecordDetailsPreview3() {
-    RecordDetails(SpeedRecord.error(System.currentTimeMillis() - 55, 2800))
+    RecordDetails(SpeedRecordUtils.error(System.currentTimeMillis() - 55, 2800))
 }

@@ -21,6 +21,8 @@ import com.galacticai.networkpulse.common.models.patient_task_queue.PatientTaskE
 import com.galacticai.networkpulse.common.models.patient_task_queue.PatientTaskQueue
 import com.galacticai.networkpulse.databse.LocalDatabase
 import com.galacticai.networkpulse.databse.models.SpeedRecord
+import com.galacticai.networkpulse.databse.models.SpeedRecordStatus
+import com.galacticai.networkpulse.databse.models.SpeedRecordUtils
 import com.galacticai.networkpulse.models.settings.Setting
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
@@ -197,7 +199,7 @@ class PulseService : Service() {
         val record =
             SpeedRecord(
                 ev.key,
-                SpeedRecord.SpeedRecordStatus.Timeout.toInt(),
+                SpeedRecordStatus.Timeout.toInt(),
                 ev.timeout.toMillis().toInt(),
                 null,
                 null
@@ -213,7 +215,7 @@ class PulseService : Service() {
         //? the rest are accidental and should be fixed
         if (ev.error !is IOException) throw ev.error
 
-        val record = SpeedRecord.error(ev.key, ev.runtime.toMillis().toInt())
+        val record = SpeedRecordUtils.error(ev.key, ev.runtime.toMillis().toInt())
         LocalDatabase.getDB(this).apply {
             speedRecordsDAO().insert(record)
         }.close()
@@ -233,11 +235,11 @@ class PulseService : Service() {
     }
 
     private fun onResponseOk(timestamp: Long, response: Response, runtime: Duration) {
-        val record = SpeedRecord.Success(
+        val record = SpeedRecordUtils.success(
             timestamp,
             runtime.toMillis().toInt(),
             0f,
-            SpeedRecord.getDownSpeed(response, runtime.toMillis().toInt())
+            SpeedRecordUtils.getDownSpeed(response, runtime.toMillis().toInt())
         )
 
         LocalDatabase.getDB(this).apply {

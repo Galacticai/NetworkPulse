@@ -15,13 +15,13 @@ fun LongestSuccessStats(summary: RecordsSummary) {
             val fromDate = formatDate(summary.longestSuccessStreak.from)
             val value = summary.longestSuccessStreak.value
             val toDate = formatDate(summary.longestSuccessStreak.to)
-            Stat(null, fromDate)
+            Stat(stringResource(R.string.from), fromDate)
             Stat(
                 stringResource(R.string.maximum),
                 value,
                 colorResource(R.color.success)
             )
-            Stat(null, toDate)
+            Stat(stringResource(R.string.to), toDate)
         }, {
             val fromDate = formatTime(summary.longestSuccessStreak.from)
             val toDate = formatTime(summary.longestSuccessStreak.to)

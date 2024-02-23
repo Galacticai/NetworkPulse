@@ -55,7 +55,6 @@ fun DashboardScreen() {
                 )
             }
         }
-        Spacer(modifier = Modifier.height(10.dp))
         AnimatedContent(
             modifier = Modifier.weight(1f),
             targetState = records.isEmpty(),

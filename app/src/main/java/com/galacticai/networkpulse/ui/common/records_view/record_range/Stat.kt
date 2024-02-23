@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Surface
@@ -35,19 +36,28 @@ fun RowScope.Stat(title: String?, value: Any, color: Color = Color.Unspecified) 
                     ).copy(.25f)
         ),
         shape = RoundedCornerShape(20.dp),
+        color = colorResource(R.color.background),
     ) {
         Column(
             modifier = Modifier.padding(5.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (title != null) {
+                val secondary = colorResource(R.color.secondary)
                 Text(
                     text = title,
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp,
+                    color = secondary,
                 )
-                Divider(color = colorResource(R.color.surface))
+                Divider(
+                    color = secondary.copy(.25f),
+                    thickness = 1.dp,
+                    modifier = Modifier
+                        .padding(horizontal = 5.dp, vertical = 2.dp)
+                        .widthIn(max = 100.dp)
+                )
             }
             Text(
                 text = value.toString(),
