@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
@@ -47,6 +46,8 @@ import com.galacticai.networkpulse.models.settings.Setting
 import com.galacticai.networkpulse.models.settings.Setting.ValueUnitBase.JsonableBitUnitBase.Companion.jsonable
 import com.galacticai.networkpulse.ui.MainActivity
 import com.galacticai.networkpulse.ui.PrepareActivity
+import com.galacticai.networkpulse.ui.common.Consistent
+import com.galacticai.networkpulse.ui.common.Consistent.screenHPadding
 import com.galacticai.networkpulse.ui.common.TopBar
 import com.galacticai.networkpulse.ui.dialogs.reloadAppDialog
 import com.galacticai.networkpulse.ui.dialogs.resetDialog
@@ -65,7 +66,7 @@ fun SettingsScreen() {
 
     val title = stringResource(R.string.settings)
     Column {
-        TopBar(title) {
+        TopBar(title, listOf {
             IconButton(onClick = {
                 resetDialog(ctx, title) { _, _ ->
                     await { Setting.restoreAll(ctx) }
@@ -77,13 +78,13 @@ fun SettingsScreen() {
                     contentDescription = stringResource(R.string.reset)
                 )
             }
-        }
+        })
         val primaryContainer = colorResource(R.color.surface)
         Surface(
-            modifier = Modifier.padding(horizontal = 10.dp),
+            modifier = Modifier.screenHPadding(),
             color = primaryContainer,
             border = BorderStroke(2.dp, primaryContainer),
-            shape = RoundedCornerShape(20.dp)
+            shape = Consistent.shape
         ) {
             LazyColumn {
                 fun spacer() = item { Spacer(modifier = Modifier.height(10.dp)) }

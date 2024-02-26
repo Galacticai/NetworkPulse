@@ -21,6 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
+import com.galacticai.networkpulse.ui.common.Consistent
 
 @Composable
 fun RowScope.Stat(title: String?, value: Any, color: Color = Color.Unspecified) {
@@ -28,14 +29,9 @@ fun RowScope.Stat(title: String?, value: Any, color: Color = Color.Unspecified) 
         modifier = Modifier
             .weight(1f)
             .padding(2.dp),
-        border = BorderStroke(
-            1.dp,
-            color = (
-                    if (color == Color.Unspecified) colorResource(R.color.surface)
-                    else color
-                    ).copy(.25f)
-        ),
-        shape = RoundedCornerShape(20.dp),
+        border = if (color == Color.Unspecified) null
+        else BorderStroke(1.dp, color = color.copy(.25f)),
+        shape = Consistent.shape,
         color = colorResource(R.color.background),
     ) {
         Column(

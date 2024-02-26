@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Icon
@@ -24,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
+import com.galacticai.networkpulse.ui.common.Consistent
 
 open class SettingsItem(
     val title: String? = null,
@@ -77,7 +77,7 @@ open class SettingsItem(
         if (grouped) Bones(itemPadding)
         else Surface(
             color = colorResource(R.color.surface),
-            shape = RoundedCornerShape(20.dp),
+            shape = Consistent.shape,
         ) {
             Bones(itemPadding)
         }

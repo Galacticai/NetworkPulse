@@ -47,14 +47,14 @@ fun DashboardScreen() {
             .padding(horizontal = 10.dp)
             .fillMaxWidth(),
     ) {
-        TopBar(stringResource(R.string.dashboard)) {
+        TopBar(stringResource(R.string.dashboard), listOf {
             IconButton(onClick = { reloadRecords() }) {
                 Icon(
                     imageVector = Icons.Rounded.Refresh,
                     contentDescription = stringResource(R.string.refresh)
                 )
             }
-        }
+        })
         AnimatedContent(
             modifier = Modifier.weight(1f),
             targetState = records.isEmpty(),

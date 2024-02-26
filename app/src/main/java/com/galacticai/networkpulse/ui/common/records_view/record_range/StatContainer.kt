@@ -22,13 +22,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.galacticai.networkpulse.R
+import com.galacticai.networkpulse.ui.common.Consistent
 
 @Composable
 fun StatContainer(title: String? = null, rowsContent: List<@Composable RowScope.() -> Unit>) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = colorResource(R.color.background),
-        shape = RoundedCornerShape(20.dp),
+        shape = Consistent.shape,
     ) {
         Column(
             modifier = Modifier

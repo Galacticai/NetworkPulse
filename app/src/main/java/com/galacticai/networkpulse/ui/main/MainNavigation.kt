@@ -1,7 +1,6 @@
 package com.galacticai.networkpulse.ui.main
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -16,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.galacticai.networkpulse.R
+import com.galacticai.networkpulse.ui.common.Consistent
 import com.galacticai.networkpulse.ui.main.screens.MainScreen
 
 @Composable
@@ -24,11 +24,12 @@ fun MainNavigation(controller: NavHostController) {
     val currentRoute = navBackStackEntry?.destination?.route
 
     Surface(
-        shape = RoundedCornerShape(20.dp),
+        shape = Consistent.shape,
         modifier = Modifier.padding(10.dp),
     ) {
         NavigationBar(
-            containerColor = colorResource(R.color.surface),
+            containerColor = colorResource(R.color.surface).copy(.8f),
+            contentColor = colorResource(R.color.onSurface),
         ) {
             for (screen in MainScreen.entries) {
                 val label = stringResource(screen.labelID)

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,6 +34,9 @@ import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.databse.LocalDatabase
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils
+import com.galacticai.networkpulse.ui.MainActivity
+import com.galacticai.networkpulse.ui.common.ConfirmationButtons
+import com.galacticai.networkpulse.ui.common.Consistent
 import kotlinx.coroutines.runBlocking
 
 
@@ -49,7 +53,7 @@ fun ModalRecordDetails(
         sheetState = state,
         dragHandle = null,
         onDismissRequest = onDismissRequest,
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        shape = RoundedCornerShape(topStart = Consistent.radius, topEnd = Consistent.radius),
     ) {
         RecordDetails(
             modifier = Modifier.padding(
@@ -68,45 +72,14 @@ fun ModalRecordDetails(
                 ),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            var confirmingDelete by remember { mutableStateOf(false) }
-            AnimatedContent(targetState = confirmingDelete, label = "DeleteConfirmationAnimation",
-                transitionSpec = {
-                    fadeIn() togetherWith fadeOut()
-                }) {
-                Row {
-                    ElevatedButton(
-                        onClick = { confirmingDelete = !confirmingDelete },
-                        elevation = ButtonDefaults.buttonElevation((if (it) 5 else 0).dp),
-                    ) {
-                        Text(stringResource(if (it) R.string.cancel else R.string.delete))
-                    }
-                    if (it) {
-                        Spacer(modifier = Modifier.width(10.dp))
-                        ElevatedButton(
-                            onClick = {
-                                LocalDatabase.getDBMainThread(context)
-                                    .speedRecordsDAO()
-                                    .delete(record)
-                                confirmingDelete = false
-                                onRecordDeleted?.invoke()
-                                onDismissRequest()
-                            },
-                            elevation = ButtonDefaults.buttonElevation(5.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = colorResource(R.color.errorContainer),
-                                contentColor = colorResource(R.color.onErrorContainer),
-                            )
-                        ) {
-                            Text(stringResource(R.string.are_you_sure))
-                        }
-                    }
-                }
+            ConfirmationButtons(stringResource(R.string.delete)) {
+                (context as MainActivity).viewModel.dao.delete(record)
+                onRecordDeleted?.invoke()
+                onDismissRequest()
             }
+
             Spacer(modifier = Modifier.width(10.dp))
-            ElevatedButton(
-                onClick = onDismissRequest,
-                elevation = ButtonDefaults.buttonElevation(0.dp),
-            ) {
+            Button(onClick = onDismissRequest) {
                 Text(stringResource(R.string.ok))
             }
         }

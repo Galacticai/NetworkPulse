@@ -1,63 +1,66 @@
 package com.galacticai.networkpulse.common.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
+/** Checkbox item with title and an optional subtitle.
+ * @param modifier container [Modifier]
+ * @param checkState state of the checkbox
+ */
 @Composable
 fun CheckItem(
     modifier: Modifier = Modifier,
     title: String,
-    subtitle: String,
-    color: Color = MaterialTheme.colorScheme.surface,
-    shape: Shape = RectangleShape,
-    onCheckedListener: ItemCheckedListener? = null,
+    subtitle: String? = null,
+    checkState: Boolean? = null,
+    onClick: CheckItemClicked? = null,
 ) {
-    var isChecked by rememberSaveable { mutableStateOf(false) }
+    val isChecked =
+        if (checkState == null) rememberSaveable { mutableStateOf(false) }
+        else rememberSaveable(checkState) { mutableStateOf(checkState) }
 
     fun onClick(newState: Boolean) {
-        isChecked = newState
-        onCheckedListener?.invoke(newState)
+        val changeAccepted =
+            onClick?.invoke(newState) //? let the callback decide
+                ?: true //? accept if uncontrolled
+        if (changeAccepted) isChecked.value = newState
     }
-    Surface(
-        color = color,
-        shape = shape,
-        onClick = { onClick(!isChecked) },
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(modifier)
-    ) {
-        Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = isChecked, onCheckedChange = { onClick(it) })
-                Text(title, modifier = Modifier.weight(1f))
-                Spacer(modifier = Modifier.width(10.dp))
-            }
+
+    Column(
+        Modifier
+            .clickable { onClick(!isChecked.value) }
+            .then(modifier)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(checked = isChecked.value, onCheckedChange = { onClick(it) })
             Text(
-                modifier = Modifier.padding(horizontal = 10.dp),
-                text = subtitle
+                title, modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 10.dp),
+                style = MaterialTheme.typography.titleMedium
             )
-            Spacer(modifier = Modifier.height(5.dp))
+        }
+        if (subtitle != null) {
+            Text(
+                modifier = Modifier
+                    .padding(horizontal = 10.dp)
+                    .padding(bottom = 5.dp),
+                text = subtitle,
+                color = LocalContentColor.current.copy(.87f),
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }
@@ -71,7 +74,7 @@ fun CheckItemPreview() {
     )
 }
 /** Callback for when a check is changed
- * @param isChecked current state
- * @return new state
+ * @param requestedCheckState newly requested state
+ * @return false will cancel the change
  */
-typealias ItemCheckedListener = (isChecked: Boolean) -> Boolean
+typealias CheckItemClicked = (requestedCheckState: Boolean) -> Boolean

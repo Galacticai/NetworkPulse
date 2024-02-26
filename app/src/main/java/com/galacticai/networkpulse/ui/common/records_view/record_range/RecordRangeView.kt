@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarData
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.sorted
+import com.galacticai.networkpulse.ui.common.Consistent
 import java.text.SimpleDateFormat
 import java.time.ZoneId
 import java.util.Locale
@@ -62,7 +63,7 @@ fun RecordRangeView(
         modifier = Modifier
             .fillMaxWidth()
             .then(modifier),
-        shape = RoundedCornerShape(20.dp),
+        shape = Consistent.shape,
         onClick = { showMore = !showMore },
     ) {
         SimpleColorChart(

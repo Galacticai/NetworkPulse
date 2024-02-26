@@ -48,6 +48,7 @@ import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.atStartOfDayMS
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils
+import com.galacticai.networkpulse.ui.common.Consistent
 import com.galacticai.networkpulse.ui.common.localized
 import com.galacticai.networkpulse.ui.main.RecordRangeList
 import com.guru.fontawesomecomposelib.FaIcon
@@ -176,9 +177,7 @@ fun RecordsPager(
                     (pagerState.currentPage + 1).localized(),
                     fontWeight = FontWeight.W900,
                 )
-                Text(
-                    " ${stringResource(R.string.of)} ${pagerState.pageCount.localized()}"
-                )
+                Text(" ${stringResource(R.string.of)} ${pagerState.pageCount.localized()}")
             }
 
             IconButton(
@@ -209,7 +208,7 @@ private fun DayPicker(
     ModalBottomSheet(
         sheetState = sheetState,
         onDismissRequest = onDismissRequest,
-        shape = RoundedCornerShape(20.dp),
+        shape = Consistent.shape,
     ) {
         Text(
             modifier = Modifier
@@ -232,7 +231,7 @@ private fun DayPicker(
                 val isCurrent = day == currentDay
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
+                    shape = Consistent.shape,
                     border = if (!isCurrent) null
                     else BorderStroke(1.dp, colorResource(R.color.primary).copy(alpha = .25f)),
                     color = colorResource(
@@ -272,30 +271,30 @@ private fun RecordsPagerPreview() {
             modifier = Modifier.padding(scaffoldPadding),
             recordsByDay = listOf(
                 //SpeedRecordUtils.error(System.currentTimeMillis() - 1000L*60*2, 1000),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*1, 1000, 1f, 29f),
-                SpeedRecordUtils.error(System.currentTimeMillis() - 1000L*60*60*2, 1000),
-                SpeedRecordUtils.error(System.currentTimeMillis() - 1000L*60*60*3, 1000),
-                SpeedRecordUtils.error(System.currentTimeMillis() - 1000L*60*60*4, 1000),
-                SpeedRecordUtils.error(System.currentTimeMillis() - 1000L*60*60*5, 1000),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*6, 1000, 1f, 29f),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*7, 1000, 1f, 29f),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*8, 1000, 1f, 29f),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*9, 1000, 1f, 29f),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*10, 1000, 1f, 29f),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*11, 1000, 1f, 29f),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*12, 1000, 1f, 29f),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*13, 1000, 1f, 29f),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*14, 1000, 1f, 29f),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*15, 1000, 1f, 29f),
-//                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*16, 1000, 1f, 29f),
-//                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*17, 1000, 1f, 29f),
-//                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*18, 1000, 1f, 29f),
-//               SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*19, 1000, 1f, 29f),
-//                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*20, 1000, 1f, 29f),
-//                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*21, 1000, 1f, 29f),
-//                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*22, 1000, 1f, 29f),
-//                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60, 1000, 1f, 29f),
-                ).groupBy { it.time.atStartOfDayMS() }
+                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 1, 1000, 1f, 29f),
+                SpeedRecordUtils.error(System.currentTimeMillis() - 1000L * 60 * 60 * 2, 1000),
+                SpeedRecordUtils.error(System.currentTimeMillis() - 1000L * 60 * 60 * 3, 1000),
+                SpeedRecordUtils.error(System.currentTimeMillis() - 1000L * 60 * 60 * 4, 1000),
+                SpeedRecordUtils.error(System.currentTimeMillis() - 1000L * 60 * 60 * 5, 1000),
+                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 6, 1000, 1f, 29f),
+                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 7, 1000, 1f, 29f),
+                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 8, 1000, 1f, 29f),
+                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 9, 1000, 1f, 29f),
+                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 10, 1000, 1f, 29f),
+                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 11, 1000, 1f, 29f),
+                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 12, 1000, 1f, 29f),
+                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 13, 1000, 1f, 29f),
+                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 14, 1000, 1f, 29f),
+                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 15, 1000, 1f, 29f),
+                //                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*16, 1000, 1f, 29f),
+                //                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*17, 1000, 1f, 29f),
+                //                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*18, 1000, 1f, 29f),
+                //               SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*19, 1000, 1f, 29f),
+                //                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*20, 1000, 1f, 29f),
+                //                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*21, 1000, 1f, 29f),
+                //                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*22, 1000, 1f, 29f),
+                //                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60, 1000, 1f, 29f),
+            ).groupBy { it.time.atStartOfDayMS() }
         )
     }
 }

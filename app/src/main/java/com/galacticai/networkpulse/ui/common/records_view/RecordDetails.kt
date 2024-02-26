@@ -37,6 +37,7 @@ import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.downSize
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.isSuccess
+import com.galacticai.networkpulse.ui.common.Consistent
 import com.galacticai.networkpulse.ui.common.durationSuffixes
 import com.galacticai.networkpulse.ui.common.localized
 import com.galacticai.networkpulse.ui.common.localizedDot
@@ -115,7 +116,7 @@ private fun Header(record: SpeedRecord) {
 private fun Body(record: SpeedRecord, bodyBG: Color) {
     val primaryContainer = colorResource(R.color.surface)
     Surface(
-        shape = RoundedCornerShape(20.dp),
+        shape = Consistent.shape,
         border = BorderStroke(1.dp, primaryContainer),
         shadowElevation = 5.dp,
         color = bodyBG,

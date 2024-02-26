@@ -5,23 +5,24 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.models.records_summary.RecordsSummary
+import com.galacticai.networkpulse.ui.common.localized
 
 @Composable
 fun CountStats(summary: RecordsSummary) {
     StatContainer(rowsContent = listOf {
         Stat(
             stringResource(R.string.total),
-            summary.allCount,
+            summary.allCount.localized(),
             colorResource(R.color.primary)
         )
         Stat(
             stringResource(R.string.success),
-            summary.successCount,
+            summary.successCount.localized(),
             colorResource(R.color.success)
         )
         Stat(
             stringResource(R.string.fail),
-            summary.failCount,
+            summary.failCount.localized(),
             colorResource(R.color.error)
         )
     })

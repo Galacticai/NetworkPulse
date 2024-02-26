@@ -37,57 +37,42 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-
-@Composable
-fun ExpandableItem(
-    title: String,
-    withDivider: Boolean = true,
-    radius: Dp = 20.dp,
-    padding: Dp = 20.dp,
-    expandedHeight: Dp? = null,
-    expandedFontWeight: FontWeight = FontWeight.W100,
-    collapsedFontWeight: FontWeight = FontWeight.W900,
-    bgColor: Color = MaterialTheme.colorScheme.background,
-    surfaceColor: Color = MaterialTheme.colorScheme.primaryContainer,
-    content: @Composable (itemPadding: PaddingValues) -> Unit
-) {
-    ExpandableGroup(
-        title,
-        withDivider,
-        radius, padding,
-        expandedHeight, expandedFontWeight,
-        collapsedFontWeight,
-        bgColor, surfaceColor,
-        listOf(content),
-    )
-}
+import com.galacticai.networkpulse.ui.common.Consistent
 
 @Composable
 fun ExpandableGroup(
     title: String,
+    modifier: Modifier = Modifier,
+    expand: Boolean = true,
+    onExpandChanged: ((Boolean) -> Unit)? = null,
     withDivider: Boolean = true,
     radius: Dp = 20.dp,
     padding: Dp = 20.dp,
-    expandedHeight: Dp? = null,
-    expandedFontWeight: FontWeight = FontWeight.W100,
-    collapsedFontWeight: FontWeight = FontWeight.W900,
-    bgColor: Color = MaterialTheme.colorScheme.background,
-    surfaceColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    contentHeight: Dp? = null,
+    titleFontWeightExpanded: FontWeight = FontWeight.W100,
+    titleFontWeightCollapsed: FontWeight = FontWeight.W900,
+    contentBackground: Color = MaterialTheme.colorScheme.background,
+    containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
     items: List<@Composable (itemPadding: PaddingValues) -> Unit>
 ) {
-    var expanded by rememberSaveable { mutableStateOf(true) }
+    var expanded by rememberSaveable { mutableStateOf(expand) }
     val roundedCorner = RoundedCornerShape(radius)
 
     Surface(
-        color = surfaceColor,
+        color = containerColor,
         shape = roundedCorner,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(modifier),
     ) {
         Column {
             Surface(
-                onClick = { expanded = !expanded },
-                color = surfaceColor,
+                onClick = {
+                    expanded = !expanded
+                    onExpandChanged?.invoke(expanded)
+                },
+
+                color = containerColor,
                 shape = roundedCorner,
             ) {
                 AnimatedContent(
@@ -108,7 +93,7 @@ fun ExpandableGroup(
                     ) {
                         Text(
                             text = title,
-                            fontWeight = if (it) expandedFontWeight else collapsedFontWeight,
+                            fontWeight = if (it) titleFontWeightExpanded else titleFontWeightCollapsed,
                             fontSize = 18.sp,
                         )
                         Spacer(modifier = Modifier.weight(1f))
@@ -120,65 +105,65 @@ fun ExpandableGroup(
                     }
                 }
             }
-
-            Surface(
-                color = bgColor,
-                shape = roundedCorner,
-                modifier = Modifier.padding(
-                    bottom = 2.dp,
-                    start = 2.dp,
-                    end = 2.dp
-                ),
-            ) {
-                if (items.isEmpty()) return@Surface
-
-                AnimatedVisibility(
-                    visible = expanded,
-                    enter = expandVertically(),
+            if (items.isNotEmpty())
+                Surface(
+                    color = contentBackground,
+                    shape = roundedCorner,
+                    modifier = Modifier.padding(
+                        bottom = 2.dp,
+                        start = 2.dp,
+                        end = 2.dp
+                    ),
                 ) {
-                    @Composable
-                    fun content(
-                        i: Int,
-                        itemView: @Composable (itemPadding: PaddingValues) -> Unit,
-                        itemPadding: PaddingValues
+                    AnimatedVisibility(
+                        visible = expanded,
+                        enter = expandVertically(),
                     ) {
-                        if (withDivider && i > 0 && i < items.size) {
-                            Divider(
-                                modifier = Modifier.padding(horizontal = padding),
-                                color = surfaceColor
-                            )
-                        }
-                        itemView(itemPadding)
-                    }
-
-                    fun itemPadding(i: Int) = PaddingValues(
-                        start = padding, end = padding,
-                        top = if (i == 0) padding else padding / 2,
-                        bottom = if (i == items.lastIndex) padding else padding / 2
-                    )
-
-                    if (items.size == 1) {
-                        Box(
-                            modifier = if (expandedHeight == null) Modifier
-                            else Modifier.height(expandedHeight)
+                        @Composable
+                        fun content(
+                            i: Int,
+                            itemView: @Composable (itemPadding: PaddingValues) -> Unit,
+                            itemPadding: PaddingValues
                         ) {
-                            content(0, items[0], itemPadding(0))
+                            if (withDivider && i > 0 && i < items.size) {
+                                Divider(
+                                    modifier = Modifier.padding(horizontal = padding),
+                                    color = containerColor
+                                )
+                            }
+                            itemView(itemPadding)
                         }
-                    } else {
-                        if (expandedHeight == null) {
-                            Column {
-                                for ((i, itemView) in items.withIndex())
-                                    content(i, itemView, itemPadding(i))
+
+                        fun itemPadding(i: Int) = PaddingValues(
+                            start = padding, end = padding,
+                            top = if (i == 0) padding else padding / 2,
+                            bottom = if (i == items.lastIndex) padding else padding / 2
+                        )
+
+                        if (items.size == 1) {
+                            Box(
+                                modifier = if (contentHeight == null) Modifier
+                                else Modifier.height(contentHeight)
+                            ) {
+                                content(0, items[0], itemPadding(0))
                             }
                         } else {
-                            LazyColumn(modifier = Modifier.height(expandedHeight)) {
-                                for ((i, itemView) in items.withIndex())
-                                    item { content(i, itemView, itemPadding(i)) }
+                            if (contentHeight == null) {
+                                Column {
+                                    items.forEachIndexed { i, itemView ->
+                                        content(i, itemView, itemPadding(i))
+                                    }
+                                }
+                            } else {
+                                LazyColumn(modifier = Modifier.height(contentHeight)) {
+                                    items.forEachIndexed { i, itemView ->
+                                        item { content(i, itemView, itemPadding(i)) }
+                                    }
+                                }
                             }
                         }
                     }
                 }
-            }
         }
     }
 }
@@ -192,7 +177,7 @@ fun PreviewExpandableGroup() {
             .padding(10.dp)
     ) {
         ExpandableGroup(
-            title = "Title", expandedHeight = 100.dp,
+            title = "Title", contentHeight = 100.dp,
             items = listOf(
                 { Text("Item 1") },
                 { Text("Item 2") },

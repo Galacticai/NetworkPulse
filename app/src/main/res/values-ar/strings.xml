@@ -17,10 +17,10 @@
     <string name="enable">تفعيل</string>
     <string name="root_dialog_text">الروت مطلوب لهذة الخاصية.</string>
 
-    <string name="notification_permission_title">تفعيل الإشعار؟</string>
-    <string name="notification_permission_text">الإشعار المستمر سيأكد عدم إنهاء نبض الشبكة من قبل النظام</string>
+    <string name="notification_permission_title">تفعيل الإشعارات</string>
+    <string name="notification_permission_text">الإشعار المستمر سيأكد عدم إنهاء نبض الشبكة من قبل النظام.</string>
 
-    <string name="battery_optimization_title">تخطي تحسين البطارية.</string>
+    <string name="battery_optimization_title">تخطي تحسين البطارية</string>
     <string name="battery_optimization_text">قد يؤدي تحسين البطارية إلى منع تشغيل نبض الشبكة في الخلفية. يرجى تعطيل التحسين لنبض الشبكة إذا كنت تريد السلوك الطبيعي.</string>
 
     <string name="prepare_activity_title">التحضيرات…</string>
@@ -117,4 +117,6 @@
     <string name="more_details">المزيد من التفاصيل…</string>
     <string name="missingAdjective">غير موجود</string>
     <string name="records_count">عدد السجلات</string>
+    <string name="continue_">متابعة</string>
+    <string name="persistent_notification">الإشعار المستمر</string>
 </resources>

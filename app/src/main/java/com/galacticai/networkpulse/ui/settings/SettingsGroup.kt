@@ -17,8 +17,8 @@ class SettingsGroup(
     fun Content() {
         ExpandableGroup(
             title,
-            bgColor = colorResource(R.color.background),
-            surfaceColor = colorResource(R.color.surface),
+            contentBackground = colorResource(R.color.background),
+            containerColor = colorResource(R.color.surface),
             items = items.map {
                 @Composable { p ->
                     it.grouped = true

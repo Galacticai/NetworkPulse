@@ -46,20 +46,22 @@ class PulseService : Service() {
             context.startService(Intent(context, PulseService::class.java))
         }
 
-        fun stop(context: Context) {
-            if (!context.isServiceRunning(PulseService::class.java)) return
+        fun stopIfRunning(context: Context) {
+            if (!context.isServiceRunning<PulseService>()) return
             context.stopService(Intent(context, PulseService::class.java))
         }
 
         fun startIfNotRunning(context: Context): Boolean {
-            if (context.isServiceRunning(PulseService::class.java)) return false
+            if (context.isServiceRunning<PulseService>()) return false
             start(context)
             return true
         }
 
         fun setupNotificationChannel(context: Context) {
             val manager = ContextCompat.getSystemService(context, NotificationManager::class.java)
-            if (manager?.getNotificationChannel(NOTIFICATION_CHANNEL_ID) != null)
+                ?: throw IllegalStateException("Unable to get NotificationManager")
+
+            if (manager.getNotificationChannel(NOTIFICATION_CHANNEL_ID) != null)
                 return
 
             val channel = NotificationChannel(
@@ -68,10 +70,11 @@ class PulseService : Service() {
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 enableVibration(false)
+
                 setSound(null, null)
                 description = "Pulse Service"
             }
-            manager?.createNotificationChannel(channel)
+            manager.createNotificationChannel(channel)
         }
     }
 
@@ -164,7 +167,6 @@ class PulseService : Service() {
     private fun event(ev: Any) = EventBus.getDefault().post(ev)
 
     interface PulseEvent {
-        class AnyEvent(val ev: PulseEvent) : PulseEvent
         data class DoneEvent(val record: SpeedRecord) : PulseEvent
 
         data class OtherEvent(

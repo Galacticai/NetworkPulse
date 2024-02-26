@@ -3,6 +3,7 @@ package com.galacticai.networkpulse.ui.common.records_view.record_range
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,6 +29,7 @@ import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarData
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.sorted
 import com.galacticai.networkpulse.models.records_summary.RecordsSummary
+import com.galacticai.networkpulse.ui.common.Consistent
 import com.galacticai.networkpulse.ui.common.durationSuffixes
 import com.galacticai.networkpulse.ui.common.localized
 import com.galacticai.networkpulse.ui.common.localizedDot
@@ -37,6 +39,8 @@ import kotlin.time.Duration
 @Composable
 fun RecordRangeDetailsView(
     records: List<SpeedRecord>,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 10.dp),
     recordsSimplified: ColorChartData? = null,
     onRecordDeleted: ((SpeedRecord) -> Unit)? = null,
     parser: ((SpeedRecord) -> BarData)? = null,
@@ -53,12 +57,17 @@ fun RecordRangeDetailsView(
 
     val summary = RecordsSummary.ofRecords(records.sorted())
 
-    Column(Modifier.fillMaxWidth()) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .then(modifier)
+    ) {
         val surface = colorResource(R.color.surface)
         Surface(
             modifier = Modifier.fillMaxWidth(),
             border = BorderStroke(2.dp, surface),
-            shape = RoundedCornerShape(20.dp),
+            shape = Consistent.shape,
+            shadowElevation = 5.dp,
         ) {
             RecordRangeChart(
                 records = records,
@@ -74,7 +83,8 @@ fun RecordRangeDetailsView(
                     .fillMaxWidth()
                     .height(40.dp),
                 border = BorderStroke(2.dp, surface),
-                shape = RoundedCornerShape(20.dp),
+                shape = Consistent.shape,
+                shadowElevation = 5.dp,
             ) {
                 SimpleColorChart(recordsSimplified)
             }
@@ -85,7 +95,7 @@ fun RecordRangeDetailsView(
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 10.dp),
+                .padding(contentPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -118,8 +128,18 @@ fun ModalRecordRange(
     parser: ((SpeedRecord) -> BarData)? = null,
     onDismissRequest: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismissRequest) {
-        RecordRangeDetailsView(records, recordsSimplified, onRecordDeleted, parser)
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest,
+        shape = Consistent.shape,
+        dragHandle = {},
+    ) {
+        RecordRangeDetailsView(
+            records,
+            contentPadding = PaddingValues(horizontal = 10.dp),
+            recordsSimplified = recordsSimplified,
+            onRecordDeleted = onRecordDeleted,
+            parser = parser,
+        )
 
         TextButton(
             onClick = onDismissRequest,

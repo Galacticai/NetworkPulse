@@ -15,7 +15,7 @@ fun reloadAppDialog(context: Context) {
         .setIcon(android.R.drawable.ic_dialog_alert)
         .setNegativeButton(android.R.string.no) { dialog, _ -> dialog.dismiss() }
         .setPositiveButton(android.R.string.yes) { _, _ ->
-            PulseService.stop(context)
+            PulseService.stopIfRunning(context)
             restartApp(context as MainActivity, PrepareActivity::class.java)
         }
         .show()

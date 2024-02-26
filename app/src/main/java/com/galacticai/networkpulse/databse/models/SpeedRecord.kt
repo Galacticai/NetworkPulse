@@ -1,5 +1,7 @@
 package com.galacticai.networkpulse.databse.models
 
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -18,7 +20,34 @@ data class SpeedRecord(
     val up: Float?,
     @ColumnInfo(name = SpeedRecordUtils.downColumn)
     val down: Float?,
-)
+) : Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readLong(),
+        parcel.readInt(),
+        parcel.readInt(),
+        parcel.readValue(Float::class.java.classLoader) as? Float,
+        parcel.readValue(Float::class.java.classLoader) as? Float,
+    )
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeLong(time)
+        parcel.writeInt(status)
+        parcel.writeInt(runtimeMS)
+        parcel.writeValue(up)
+        parcel.writeValue(down)
+    }
+
+    override fun describeContents() = 0
+
+    companion object CREATOR : Parcelable.Creator<SpeedRecord> {
+        override fun createFromParcel(parcel: Parcel): SpeedRecord =
+
+            SpeedRecord(parcel)
+
+        override fun newArray(size: Int): Array<SpeedRecord?> =
+            arrayOfNulls(size)
+    }
+}
 
 object SpeedRecordUtils {
     const val tableName = "logs"

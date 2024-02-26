@@ -19,6 +19,7 @@ import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.ui.CubicChart
 import com.galacticai.networkpulse.common.ui.CubicChartData
 import com.galacticai.networkpulse.models.settings.Setting
+import com.galacticai.networkpulse.ui.common.Consistent
 
 @Composable
 fun HourGraph(data: CubicChartData) {
@@ -30,7 +31,7 @@ fun HourGraph(data: CubicChartData) {
 
     Surface(
         color = colorResource(R.color.background),
-        shape = RoundedCornerShape(20.dp),
+        shape =Consistent.shape,
         border = BorderStroke(1.dp, colorResource(R.color.surface)),
     ) {
         CubicChart(

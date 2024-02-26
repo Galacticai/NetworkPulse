@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -26,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.await
 import com.galacticai.networkpulse.models.settings.Setting
+import com.galacticai.networkpulse.ui.common.Consistent
 
 
 class SettingsSwitch(
@@ -47,7 +47,7 @@ class SettingsSwitch(
     Surface(
         onClick = { setValue(!value) },
         color = colorResource(R.color.background),
-        shape = RoundedCornerShape(20.dp)
+        shape = Consistent.shape
     ) {
         Column(modifier = Modifier.padding(it)) {
             Row(

@@ -57,6 +57,7 @@ import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarData
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.average
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.downMax
+import com.galacticai.networkpulse.ui.common.Consistent
 import com.galacticai.networkpulse.ui.common.durationSuffixes
 import com.galacticai.networkpulse.ui.common.localized
 import com.galacticai.networkpulse.ui.common.records_view.record_range.ColorChartOverlayText
@@ -89,7 +90,7 @@ fun RecordRangeList(
 
     Surface(
         color = colorResource(R.color.surface),
-        shape = RoundedCornerShape(20.dp),
+        shape = Consistent.shape,
         border = BorderStroke(2.dp, colorResource(R.color.surface)),
         modifier = Modifier
             .graphicsLayer(clip = true)
@@ -180,8 +181,6 @@ private fun Dot(size: Float, color: Color, modifier: Modifier = Modifier) {
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun LegendView(maxValue: Float, modifier: Modifier = Modifier) {
-    val rounded = RoundedCornerShape(20.dp)
-
     val max = BitValue(
         maxValue,
         BitUnit(BitUnitExponent.Metric.Kilo, BitUnitBase.Byte)
@@ -212,7 +211,7 @@ private fun LegendView(maxValue: Float, modifier: Modifier = Modifier) {
             .pointerInteropFilter { false }
             .then(modifier),
         color = colorResource(R.color.background),
-        shape = rounded,
+        shape = Consistent.shape,
         border = BorderStroke(2.dp, colorResource(R.color.primaryContainer)),
         shadowElevation = 5.dp,
     ) {
@@ -319,7 +318,7 @@ private fun DayHeader(
         color = colorResource(R.color.secondaryContainer),
         border = BorderStroke(1.dp, colorResource(R.color.onSecondaryContainer).copy(.5f)),
         contentColor = colorResource(R.color.onSecondaryContainer),
-        shape = RoundedCornerShape(20.dp),
+        shape = Consistent.shape,
         onClick = { showSummary = !showSummary },
         modifier = Modifier
             .fillMaxWidth()

@@ -32,7 +32,7 @@
     <color name="onSuccessContainer">#024100</color>
 
     <color name="warning">#ba911a</color>
-    <color name="onWarning">@color/white</color>
+    <color name="onWarning">@color/black</color>
     <color name="warningContainer">#fff9d6</color>
     <color name="onWarningContainer">#412e00</color>
 
