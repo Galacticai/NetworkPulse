@@ -64,7 +64,10 @@ class PrepareActivity : AppCompatActivity() {
 
 
     private fun setup() {
-        doneNotificationState.value = Grants.PersistentNotification.isGranted(this)
+        //? android <13 don't require asking for notification permission
+        doneNotificationState.value =
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                    Grants.PersistentNotification.isGranted(this)
         doneBatteryOptimizationState.value = isIgnoringBatteryOptimization(this)
         if (isReady.value) done()
 
@@ -109,12 +112,13 @@ class PrepareActivity : AppCompatActivity() {
         GalacticTheme {
             Scaffold {
                 val primaryContainer = colorResource(R.color.primaryContainer)
+                val bg = colorResource(R.color.background)
                 val stops = arrayOf(
-                    0f to Color.Transparent,
+                    0f to bg,
                     .025f to primaryContainer.copy(.1f),
                     .2f to primaryContainer.copy(.15f),
                     .4f to primaryContainer,
-                    1f to Color.Transparent,
+                    1f to bg,
                 )
                 Box(
                     Modifier
@@ -217,11 +221,6 @@ class PrepareActivity : AppCompatActivity() {
                     //? set will happen in PrepareActivity.onRequestPermissionsResult
                     Grants.PersistentNotification.setupChannel(this@PrepareActivity)
                     Grants.PersistentNotification.grantPermission(this@PrepareActivity)
-
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                        doneNotificationState.value =
-                            Grants.PersistentNotification.isGranted(this@PrepareActivity)
-                    }
                     return@CheckItem false
                 }
                 Divider(Modifier.padding(horizontal = 10.dp))
