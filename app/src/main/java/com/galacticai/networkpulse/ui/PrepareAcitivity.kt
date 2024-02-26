@@ -3,6 +3,7 @@ package com.galacticai.networkpulse.ui
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
@@ -33,7 +34,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -52,8 +52,8 @@ import com.galacticai.networkpulse.ui.theme.GalacticTheme
 class PrepareActivity : AppCompatActivity() {
     private lateinit var launcherBatteryOptimization: ActivityResultLauncher<Intent>
 
-    private var doneNotificationState = mutableStateOf(false)
-    private var doneBatteryOptimizationState = mutableStateOf(false)
+    private val doneNotificationState = mutableStateOf(false)
+    private val doneBatteryOptimizationState = mutableStateOf(false)
     private val isReady = derivedStateOf { doneNotificationState.value && doneBatteryOptimizationState.value }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,13 +68,11 @@ class PrepareActivity : AppCompatActivity() {
         doneBatteryOptimizationState.value = isIgnoringBatteryOptimization(this)
         if (isReady.value) done()
 
-        launcherBatteryOptimization = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) {
+        val contract = ActivityResultContracts.StartActivityForResult()
+        launcherBatteryOptimization = registerForActivityResult(contract) {
             //! if (it.resultCode == Activity.RESULT_OK)
             //? result code is always 0 for battery optimization, so it must be checked manually
-            doneBatteryOptimizationState.value =
-                isIgnoringBatteryOptimization(this@PrepareActivity)
+            doneBatteryOptimizationState.value = isIgnoringBatteryOptimization(this)
         }
     }
 
@@ -97,22 +95,27 @@ class PrepareActivity : AppCompatActivity() {
         }
     }
 
+    //? Inside the class for simpler data access
     @Preview
     @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
     @Composable
     private fun PrepareActivityContent() {
-        val context = LocalContext.current
         var size by remember { mutableStateOf(IntSize(1, 1)) }
 
         val doneNotification by remember { doneNotificationState }
         val doneBatteryOptimization by remember { doneBatteryOptimizationState }
-        val isReady by remember(doneNotification, doneBatteryOptimization) {
-            derivedStateOf { doneNotification && doneBatteryOptimization }
-        }
+        val isReady by remember(doneNotification, doneBatteryOptimization) { isReady }
 
         GalacticTheme {
             Scaffold {
                 val primaryContainer = colorResource(R.color.primaryContainer)
+                val stops = arrayOf(
+                    0f to Color.Transparent,
+                    .025f to primaryContainer.copy(.1f),
+                    .2f to primaryContainer.copy(.15f),
+                    .4f to primaryContainer,
+                    1f to Color.Transparent,
+                )
                 Box(
                     Modifier
                         .onGloballyPositioned { coordinates -> size = coordinates.size }
@@ -120,115 +123,117 @@ class PrepareActivity : AppCompatActivity() {
                             Brush.linearGradient(
                                 start = Offset.Zero,
                                 end = Offset(0f, size.height.toFloat()),
-                                colorStops = arrayOf(
-                                    0f to Color.Transparent,
-                                    .025f to primaryContainer.copy(.1f),
-                                    .2f to primaryContainer.copy(.15f),
-                                    .4f to primaryContainer,
-                                    1f to Color.Transparent,
-                                )
+                                colorStops = stops
                             )
                         )
                 ) {
                     Column(Modifier.padding(it)) {
-                        val colors = listOf(
-                            colorResource(R.color.secondaryContainer).copy(.5f),
-                            Color.Transparent
-                        )
-
-                        fun Modifier.gradient(x: Float, y: Float) =
-                            this.background(
-                                Brush.radialGradient(
-                                    center = Offset(x, y),
-                                    colors = colors
-                                )
-                            )
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .weight(.5f)
-                                .gradient(size.width / 4f, size.height / 7f)
-                                .gradient(size.width - size.width / 3.5f, size.height / 6f)
-                                .gradient(size.width / 2f, size.height / 5f)
-                                .background(
-                                    Brush.linearGradient(
-                                        end = Offset(0f, size.height.toFloat()),
-                                        colorStops = arrayOf(
-                                            0f to colorResource(R.color.background),
-                                            .1f to Color.Transparent,
-                                            .5f to Color.Transparent,
-                                            1f to colorResource(R.color.background)
-                                        )
-                                    )
-                                )
-                        ) {
-                            ScreenTitle(
-                                stringResource(R.string.prepare_activity_title),
-                                Modifier
-                                    .align(Alignment.Center)
-                                    .padding(20.dp),
-                                color = colorResource(R.color.onSecondaryContainer),
-                            )
-                        }
-                        Surface(
-                            Modifier.screenHPadding(),
-                            color = colorResource(R.color.background),
-                            shape = Consistent.shape,
-                            shadowElevation = 10.dp,
-                        ) {
-                            Column {
-                                CheckItem(
-                                    modifier = Modifier.padding(10.dp),
-                                    title = stringResource(R.string.notification_permission_title),
-                                    subtitle = stringResource(R.string.notification_permission_text),
-                                    checkState = doneNotification,
-                                ) {
-                                    if (doneNotification) return@CheckItem false
-                                    //? set will happen in PrepareActivity.onRequestPermissionsResult
-                                    Grants.PersistentNotification.setupAndGrant(context as PrepareActivity)
-                                    false
-                                }
-                                Divider(Modifier.padding(horizontal = 10.dp))
-                                CheckItem(
-                                    modifier = Modifier.padding(10.dp),
-                                    title = stringResource(R.string.battery_optimization_title),
-                                    subtitle = stringResource(R.string.battery_optimization_text),
-                                    checkState = doneBatteryOptimization,
-                                ) {
-                                    if (doneBatteryOptimization) return@CheckItem false
-                                    val activity = context as PrepareActivity
-                                    Grants.BatteryOptimization.grant(
-                                        activity,
-                                        activity.launcherBatteryOptimization
-                                    )
-                                    false
-                                }
-                            }
-                        }
-
-                        Spacer(Modifier.weight(.5f))
-
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 15.dp)
-                        ) {
-                            AnimatedVisibility(visible = !isReady) {
-                                ConfirmationButtons(stringResource(R.string.skip)) {
-                                    done(force = true)
-                                }
-
-                                
-                            }
-                            Spacer(Modifier.weight(1f))
-                            Button(
-                                enabled = isReady,
-                                onClick = { done() },
-                            ) {
-                                Text(stringResource(R.string.continue_))
-                            }
-                        }
+                        val weight05 = Modifier.weight(.5f)
+                        Header(size, weight05)
+                        Body(doneNotification, doneBatteryOptimization)
+                        Spacer(weight05)
+                        Footer(isReady)
                     }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun Footer(ready: Boolean) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 15.dp)
+        ) {
+            AnimatedVisibility(visible = !ready) {
+                ConfirmationButtons(stringResource(R.string.skip)) {
+                    done(force = true)
+                }
+            }
+            Spacer(Modifier.weight(1f))
+            Button(enabled = ready, onClick = { done() }) {
+                Text(stringResource(R.string.continue_))
+            }
+        }
+    }
+
+    @Composable
+    private fun Header(size: IntSize, modifier: Modifier = Modifier) {
+        val colors = listOf(
+            colorResource(R.color.secondaryContainer).copy(.5f),
+            Color.Transparent
+        )
+
+        fun Modifier.gradient(x: Float, y: Float) = background(
+            Brush.radialGradient(center = Offset(x, y), colors = colors)
+        )
+
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .gradient(size.width / 4f, size.height / 7f)
+                .gradient(size.width - size.width / 3.5f, size.height / 6f)
+                .gradient(size.width / 2f, size.height / 5f)
+                .background(
+                    Brush.linearGradient(
+                        end = Offset(0f, size.height.toFloat()),
+                        colorStops = arrayOf(
+                            0f to colorResource(R.color.background),
+                            .1f to Color.Transparent,
+                            .5f to Color.Transparent,
+                            1f to colorResource(R.color.background)
+                        )
+                    )
+                )
+                .then(modifier)
+        ) {
+            ScreenTitle(
+                stringResource(R.string.prepare_activity_title),
+                Modifier
+                    .align(Alignment.Center)
+                    .padding(20.dp),
+                color = colorResource(R.color.onSecondaryContainer),
+            )
+        }
+    }
+
+    @Composable
+    private fun Body(doneNotification: Boolean, doneBatteryOptimization: Boolean) {
+        Surface(
+            Modifier.screenHPadding(),
+            color = colorResource(R.color.background),
+            shape = Consistent.shape,
+            shadowElevation = 10.dp,
+        ) {
+            Column {
+                CheckItem(
+                    modifier = Modifier.padding(10.dp),
+                    title = stringResource(R.string.notification_permission_title),
+                    subtitle = stringResource(R.string.notification_permission_text),
+                    checkState = doneNotification,
+                ) {
+                    if (doneNotification) return@CheckItem false
+                    //? set will happen in PrepareActivity.onRequestPermissionsResult
+                    Grants.PersistentNotification.setupChannel(this@PrepareActivity)
+                    Grants.PersistentNotification.grantPermission(this@PrepareActivity)
+
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                        doneNotificationState.value =
+                            Grants.PersistentNotification.isGranted(this@PrepareActivity)
+                    }
+                    return@CheckItem false
+                }
+                Divider(Modifier.padding(horizontal = 10.dp))
+                CheckItem(
+                    modifier = Modifier.padding(10.dp),
+                    title = stringResource(R.string.battery_optimization_title),
+                    subtitle = stringResource(R.string.battery_optimization_text),
+                    checkState = doneBatteryOptimization,
+                ) {
+                    if (doneBatteryOptimization) return@CheckItem false
+                    Grants.BatteryOptimization.grant(this@PrepareActivity, launcherBatteryOptimization)
+                    return@CheckItem false
                 }
             }
         }

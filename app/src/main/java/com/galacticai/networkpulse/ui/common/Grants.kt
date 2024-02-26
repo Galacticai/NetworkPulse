@@ -21,7 +21,10 @@ object Grants {
 
     object PersistentNotification {
         private const val permission = Permissions.POST_NOTIFICATIONS
-        private const val channelID = "PersistentNotification"
+        const val channelID = "PersistentNotification"
+
+        fun isGranted(context: Context) =
+            context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
 
         fun setupChannel(context: Context) {
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE)
@@ -31,8 +34,8 @@ object Grants {
                 return
 
             NotificationChannel(
-                context.getString(R.string.persistent_notification),
                 channelID,
+                context.getString(R.string.persistent_notification),
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 enableVibration(true)
@@ -40,17 +43,9 @@ object Grants {
             }
         }
 
-        fun isGranted(context: Context) =
-            context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
-
         fun grantPermission(activity: Activity) {
             if (isGranted(activity)) return
             activity.requestPermissions(arrayOf(permission), R.id.persistent_notification_request)
-        }
-
-        fun setupAndGrant(activity: Activity) {
-            setupChannel(activity)
-            grantPermission(activity)
         }
     }
 

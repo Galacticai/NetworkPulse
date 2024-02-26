@@ -1,17 +1,17 @@
 package com.galacticai.networkpulse.services
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.IBinder
 import android.util.Log
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -24,6 +24,8 @@ import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordStatus
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils
 import com.galacticai.networkpulse.models.settings.Setting
+import com.galacticai.networkpulse.ui.PrepareActivity
+import com.galacticai.networkpulse.ui.common.Grants
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -39,9 +41,6 @@ import kotlin.concurrent.timer
 
 class PulseService : Service() {
     companion object {
-        const val POST_NOTIFICATIONS = "android.permission.POST_NOTIFICATIONS"
-        const val NOTIFICATION_CHANNEL_ID = "PulseServiceChannel"
-
         fun start(context: Context) {
             context.startService(Intent(context, PulseService::class.java))
         }
@@ -61,11 +60,11 @@ class PulseService : Service() {
             val manager = ContextCompat.getSystemService(context, NotificationManager::class.java)
                 ?: throw IllegalStateException("Unable to get NotificationManager")
 
-            if (manager.getNotificationChannel(NOTIFICATION_CHANNEL_ID) != null)
+            if (manager.getNotificationChannel(Grants.PersistentNotification.channelID) != null)
                 return
 
             val channel = NotificationChannel(
-                NOTIFICATION_CHANNEL_ID,
+                Grants.PersistentNotification.channelID,
                 PulseService::class.simpleName,
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
@@ -140,26 +139,30 @@ class PulseService : Service() {
         }
     }
 
+    @SuppressLint("MissingPermission") //? `isGranted` will check the permission
     private fun showNotification() {
-        NotificationManagerCompat.from(this).apply {
-            val permission =
-                ActivityCompat.checkSelfPermission(applicationContext, POST_NOTIFICATIONS)
-            if (permission != PackageManager.PERMISSION_GRANTED)
-                return@apply
+        if (!Grants.PersistentNotification.isGranted(this)) return
 
-            notification = NotificationCompat
-                .Builder(this@PulseService, NOTIFICATION_CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setContentTitle(getString(R.string.app_name))
-                .setContentText("Pulse")
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setVibrate(longArrayOf(0L))
-                .setSound(null)
-                .setOngoing(true)
-                .build()
-
-            notify(R.id.pulse_notification, notification)
+        val intent = Intent(this, PrepareActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0, intent, PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val builder = NotificationCompat
+            .Builder(this, Grants.PersistentNotification.channelID)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(getString(R.string.pulse_service))
+            .setContentText("testing")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setVibrate(longArrayOf(0L))
+            .setSound(null)
+            .setOngoing(true)
+            .setContentIntent(pendingIntent)
+
+        NotificationManagerCompat.from(this)
+            .notify(R.id.pulse_notification, builder.build())
     }
 
     //? PatientTaskQueue

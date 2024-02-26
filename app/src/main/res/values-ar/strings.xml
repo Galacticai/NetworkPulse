@@ -119,4 +119,5 @@
     <string name="records_count">عدد السجلات</string>
     <string name="continue_">متابعة</string>
     <string name="persistent_notification">الإشعار المستمر</string>
+    <string name="pulse_service">خدمة النبض</string>
 </resources>
