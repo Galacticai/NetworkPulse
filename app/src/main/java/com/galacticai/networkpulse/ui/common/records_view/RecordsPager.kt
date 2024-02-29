@@ -14,14 +14,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,25 +30,26 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
-import com.galacticai.networkpulse.common.atStartOfDayMS
-import com.galacticai.networkpulse.databse.models.SpeedRecord
-import com.galacticai.networkpulse.databse.models.SpeedRecordUtils
-import com.galacticai.networkpulse.ui.common.Consistent
-import com.galacticai.networkpulse.ui.common.localized
+import com.galacticai.networkpulse.models.DayRange
+import com.galacticai.networkpulse.ui.MainActivity
+import com.galacticai.networkpulse.ui.common.NoRecordsMessage
 import com.galacticai.networkpulse.ui.main.RecordRangeList
+import com.galacticai.networkpulse.ui.util.Consistent
+import com.galacticai.networkpulse.ui.util.localized
 import com.guru.fontawesomecomposelib.FaIcon
 import com.guru.fontawesomecomposelib.FaIconType
 import com.guru.fontawesomecomposelib.FaIcons
@@ -61,16 +60,23 @@ import java.util.Locale
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun RecordsPager(
-    modifier: Modifier = Modifier,
-    recordsByDay: Map<Long, List<SpeedRecord>>,
-    onRecordDeleted: ((SpeedRecord) -> Unit)? = null
-) {
-    fun dayKey(i: Int) = recordsByDay.keys.toList()[i]
+fun RecordsPager(modifier: Modifier = Modifier) {
+    val activity = LocalContext.current as MainActivity
+    var days by rememberSaveable { mutableStateOf<List<DayRange>>(emptyList()) }
 
-    val pageCount by remember(recordsByDay) { derivedStateOf { recordsByDay.size } }
+    LaunchedEffect(Unit) {
+        days = activity.viewModel.dao.getDays()
+    }
+
+    if (days.isEmpty()) {
+        NoRecordsMessage()
+        return
+    }
+
+    val pageCount by remember(days) { derivedStateOf { days.size } }
 
     val pagerState = rememberPagerState(pageCount - 1, pageCount = { pageCount })
+
 
     fun scrollTo(page: Int) {
         if (page < 0 || page >= pagerState.pageCount) return
@@ -90,12 +96,23 @@ fun RecordsPager(
             pageSpacing = 20.dp,
             modifier = Modifier.weight(1f),
         ) { page ->
-            val dayRecords = recordsByDay[dayKey(page)]!!
+            //? state update on demand
+            var dummyLoader by remember { mutableStateOf(false) }
+            fun reload() {
+                dummyLoader = !dummyLoader
+            }
+
+            val dayRange by remember(days, dummyLoader) { derivedStateOf { days[page] } }
+            val dayRecords by remember(dayRange) {
+                derivedStateOf {
+                    activity.viewModel.dao.getBetween(dayRange.first, dayRange.last)
+                }
+            }
             RecordRangeList(
                 modifier = Modifier.fillMaxSize(),
                 records = dayRecords,
                 reversed = true,
-                onRecordDeleted = onRecordDeleted,
+                onRecordDeleted = { reload() },
             )
         }
 
@@ -121,8 +138,11 @@ fun RecordsPager(
             if (pickingDay) {
                 DayPicker(
                     sheetState = sheetState,
-                    currentDay = dayKey(pagerState.currentPage),
-                    days = recordsByDay,
+                    currentDay = days[pagerState.currentPage].first,
+                    days = days.associate {
+                        it.first to
+                                activity.viewModel.dao.countBetween(it.first, it.last)
+                    },
                     onDismissRequest = { pickingDay = false },
                 ) {
                     scrollTo(it)
@@ -165,7 +185,7 @@ fun RecordsPager(
                 onClick = { pickingDay = true },
             ) {
                 val currentDayString = SimpleDateFormat("dd/M/yyyy", Locale.getDefault())
-                    .format(dayKey(pagerState.currentPage))
+                    .format(days[pagerState.currentPage].first)
                 Text(currentDayString)
                 Divider(
                     modifier = Modifier
@@ -197,7 +217,7 @@ fun RecordsPager(
 private fun DayPicker(
     sheetState: SheetState,
     currentDay: Long,
-    days: Map<Long, List<SpeedRecord>>,
+    days: Map<Long, Int>,
     onDismissRequest: () -> Unit,
     onPicked: (Int) -> Unit
 ) {
@@ -207,7 +227,10 @@ private fun DayPicker(
     }
     ModalBottomSheet(
         sheetState = sheetState,
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = {
+            MainScope().launch { sheetState.hide() }
+            onDismissRequest()
+        },
         shape = Consistent.shape,
     ) {
         Text(
@@ -252,7 +275,7 @@ private fun DayPicker(
                             fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal
                         )
                         Text(
-                            "${days[day]!!.size} ${stringResource(R.string.records)}",
+                            "${days[day]} ${stringResource(R.string.records)}",
                             color = if (isCurrent) colorResource(R.color.secondary) else otherTextColor,
                         )
                     }
@@ -260,41 +283,5 @@ private fun DayPicker(
             }
             item { Spacer(modifier = Modifier.height(45.dp)) }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun RecordsPagerPreview() {
-    Scaffold { scaffoldPadding ->
-        RecordsPager(
-            modifier = Modifier.padding(scaffoldPadding),
-            recordsByDay = listOf(
-                //SpeedRecordUtils.error(System.currentTimeMillis() - 1000L*60*2, 1000),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 1, 1000, 1f, 29f),
-                SpeedRecordUtils.error(System.currentTimeMillis() - 1000L * 60 * 60 * 2, 1000),
-                SpeedRecordUtils.error(System.currentTimeMillis() - 1000L * 60 * 60 * 3, 1000),
-                SpeedRecordUtils.error(System.currentTimeMillis() - 1000L * 60 * 60 * 4, 1000),
-                SpeedRecordUtils.error(System.currentTimeMillis() - 1000L * 60 * 60 * 5, 1000),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 6, 1000, 1f, 29f),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 7, 1000, 1f, 29f),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 8, 1000, 1f, 29f),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 9, 1000, 1f, 29f),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 10, 1000, 1f, 29f),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 11, 1000, 1f, 29f),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 12, 1000, 1f, 29f),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 13, 1000, 1f, 29f),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 14, 1000, 1f, 29f),
-                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L * 60 * 60 * 15, 1000, 1f, 29f),
-                //                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*16, 1000, 1f, 29f),
-                //                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*17, 1000, 1f, 29f),
-                //                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*18, 1000, 1f, 29f),
-                //               SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*19, 1000, 1f, 29f),
-                //                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*20, 1000, 1f, 29f),
-                //                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*21, 1000, 1f, 29f),
-                //                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60*22, 1000, 1f, 29f),
-                //                SpeedRecordUtils.success(System.currentTimeMillis() - 1000L*60*60, 1000, 1f, 29f),
-            ).groupBy { it.time.atStartOfDayMS() }
-        )
     }
 }

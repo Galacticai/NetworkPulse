@@ -43,9 +43,9 @@ import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.isIgnoringBatteryOptimization
 import com.galacticai.networkpulse.common.ui.CheckItem
 import com.galacticai.networkpulse.ui.common.ConfirmationButtons
-import com.galacticai.networkpulse.ui.common.Consistent
-import com.galacticai.networkpulse.ui.common.Consistent.screenHPadding
-import com.galacticai.networkpulse.ui.common.Grants
+import com.galacticai.networkpulse.ui.util.Consistent
+import com.galacticai.networkpulse.ui.util.Consistent.screenHPadding
+import com.galacticai.networkpulse.ui.util.Grants
 import com.galacticai.networkpulse.ui.common.ScreenTitle
 import com.galacticai.networkpulse.ui.theme.GalacticTheme
 
@@ -223,7 +223,10 @@ class PrepareActivity : AppCompatActivity() {
                     Grants.PersistentNotification.grantPermission(this@PrepareActivity)
                     return@CheckItem false
                 }
-                Divider(Modifier.padding(horizontal = 10.dp))
+                Divider(
+                    Modifier.padding(horizontal = 10.dp),
+                    color = colorResource(R.color.surface),
+                )
                 CheckItem(
                     modifier = Modifier.padding(10.dp),
                     title = stringResource(R.string.battery_optimization_title),

@@ -4,6 +4,8 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideIn
+import androidx.compose.animation.slideOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -20,7 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
@@ -28,9 +29,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -39,16 +43,19 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.atStartOfDayMS
 import com.galacticai.networkpulse.common.atStartOfHourMS
+import com.galacticai.networkpulse.common.fromUTC
 import com.galacticai.networkpulse.common.models.bit_value.BitUnit
 import com.galacticai.networkpulse.common.models.bit_value.BitUnitBase
 import com.galacticai.networkpulse.common.models.bit_value.BitUnitExponent
@@ -57,13 +64,13 @@ import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarData
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.average
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.downMax
-import com.galacticai.networkpulse.ui.common.Consistent
-import com.galacticai.networkpulse.ui.common.durationSuffixes
-import com.galacticai.networkpulse.ui.common.localized
 import com.galacticai.networkpulse.ui.common.records_view.record_range.ColorChartOverlayText
 import com.galacticai.networkpulse.ui.common.records_view.record_range.Filler
 import com.galacticai.networkpulse.ui.common.records_view.record_range.RecordRangeType
 import com.galacticai.networkpulse.ui.common.records_view.record_range.RecordRangeView
+import com.galacticai.networkpulse.ui.util.Consistent
+import com.galacticai.networkpulse.ui.util.durationSuffixes
+import com.galacticai.networkpulse.ui.util.localized
 import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
 import java.time.ZoneId
@@ -78,6 +85,7 @@ fun RecordRangeList(
     reversed: Boolean = false,
     onRecordDeleted: ((SpeedRecord) -> Unit)? = null,
 ) {
+    val context = LocalContext.current
     val listState = rememberLazyListState()
 
     val zoneId = ZoneId.systemDefault()
@@ -96,25 +104,43 @@ fun RecordRangeList(
             .graphicsLayer(clip = true)
             .then(modifier)
     ) {
+        var legendHeight by rememberSaveable { mutableIntStateOf(0) }
         val recordsInOrder = if (reversed) records.reversed() else records
         val maxValue = records.downMax
-        Box(modifier = Modifier.fillMaxSize()) {
+
+        //? cache: utc time to system time
+        var inSystemTime by rememberSaveable { mutableStateOf<Map<Long, Long>>(emptyMap()) }
+        val groupedByDay by remember(recordsInOrder) {
+            derivedStateOf {
+                val newMap = mutableMapOf<Long, Long>()
+                val byDay = recordsInOrder.groupBy { r ->
+                    val day = r.time.fromUTC(zoneId)
+                    newMap[r.time] = day
+                    return@groupBy day.atStartOfDayMS(zoneId)
+                }
+                inSystemTime = newMap
+                return@derivedStateOf byDay
+            }
+        }
+
+
+        Box(Modifier.fillMaxSize()) {
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                val groupedByDay = recordsInOrder.groupBy { record -> record.time.atStartOfDayMS(zoneId) }
 
                 var addSpace = false
                 groupedByDay.forEach { (day, dayRecords) ->
                     if (addSpace) item { Spacer(Modifier.height(20.dp)) }
 
-                    val groupedByHour = dayRecords.groupBy { record -> record.time.atStartOfHourMS(zoneId) }
+                    val groupedByHour = dayRecords.groupBy { r ->
+                        inSystemTime[r.time]!!.atStartOfHourMS(zoneId)
+                    }
 
                     stickyHeader { DayHeader(day, groupedByHour, records.size, locale) }
 
                     groupedByHour.forEach { (hour, hourRecords) ->
-                        //stickyHeader { HourHeader(hour, hourRecords, locale) }
                         item {
                             val ha = haFormatter.format(hour)
                             val haParts = ha.split(' ')
@@ -149,32 +175,30 @@ fun RecordRangeList(
                             )
                         }
                     }
-                    item { Spacer(Modifier.height(100.dp)) }
+
+                    item {
+                        Spacer(
+                            Modifier.height(
+                                (legendHeight / context.resources.displayMetrics.density).dp
+                            )
+                        )
+                    }
                     if (!addSpace) addSpace = true
                 }
             }
             AnimatedVisibility(
+                modifier = Modifier.align(Alignment.BottomCenter),
                 visible = !listState.canScrollBackward || !listState.canScrollForward,
-                Modifier.align(Alignment.BottomCenter),
+                enter = slideIn { IntOffset(0, it.height) } + fadeIn(),
+                exit = slideOut { IntOffset(0, it.height) } + fadeOut(),
             ) {
-                LegendView(maxValue, Modifier.align(Alignment.BottomCenter))
+                LegendView(
+                    maxValue,
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .onGloballyPositioned { legendHeight = it.size.height })
             }
         }
-    }
-}
-
-@Composable
-private fun Dot(size: Float, color: Color, modifier: Modifier = Modifier) {
-    Canvas(
-        Modifier
-            .size(size.dp, size.dp)
-            .then(modifier)
-    ) {
-        drawCircle(
-            color = color,
-            center = Offset(x = size / 2f, y = size / 2f),
-            radius = size / 2f
-        )
     }
 }
 
@@ -185,7 +209,7 @@ private fun LegendView(maxValue: Float, modifier: Modifier = Modifier) {
         maxValue,
         BitUnit(BitUnitExponent.Metric.Kilo, BitUnitBase.Byte)
     ).toNearestUnit()
-    val persecond = "/${durationSuffixes(LocalContext.current).seconds}"
+    val perSec = "/${durationSuffixes(LocalContext.current).seconds}"
 
     val primary = colorResource(R.color.primary)
     val warning = colorResource(R.color.warning)
@@ -281,7 +305,7 @@ private fun LegendView(maxValue: Float, modifier: Modifier = Modifier) {
                     letterSpacing = spacing,
                 )
                 Text(
-                    "($max$persecond)",
+                    "($max$perSec)",
                     color = primary,
                     fontSize = size,
                     letterSpacing = spacing * .5f,
@@ -379,7 +403,7 @@ private fun DayHeader(
                         },
                         parser = { record ->
                             val label = SimpleDateFormat("h a", locale)
-                                .format(record.time)
+                                .format(record.time.fromUTC())
                             BarData(label, record.down ?: 0f)
                         },
                     )

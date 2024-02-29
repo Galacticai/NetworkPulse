@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.await
 import com.galacticai.networkpulse.models.settings.Setting
-import com.galacticai.networkpulse.ui.common.Consistent
+import com.galacticai.networkpulse.ui.util.Consistent
 
 
 class SettingsSwitch(

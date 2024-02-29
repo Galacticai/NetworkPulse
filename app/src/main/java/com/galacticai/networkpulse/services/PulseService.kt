@@ -1,7 +1,6 @@
 package com.galacticai.networkpulse.services
 
 import android.annotation.SuppressLint
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -19,13 +18,14 @@ import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.isServiceRunning
 import com.galacticai.networkpulse.common.models.patient_task_queue.PatientTaskEvent
 import com.galacticai.networkpulse.common.models.patient_task_queue.PatientTaskQueue
+import com.galacticai.networkpulse.common.toUTC
 import com.galacticai.networkpulse.databse.LocalDatabase
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordStatus
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils
 import com.galacticai.networkpulse.models.settings.Setting
 import com.galacticai.networkpulse.ui.PrepareActivity
-import com.galacticai.networkpulse.ui.common.Grants
+import com.galacticai.networkpulse.ui.util.Grants
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -85,8 +85,6 @@ class PulseService : Service() {
     //? timestamp: Long , result: Response
     private lateinit var queue: PatientTaskQueue<Long, Response>
 
-    private lateinit var notification: Notification
-
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         runBlocking {
             interval.longValue = Setting.RequestInterval.get(this@PulseService)
@@ -128,7 +126,7 @@ class PulseService : Service() {
     private fun initTimer() {
         this.timer = timer("PulseServiceTimer", false, 0, interval.longValue) {
             queue.addRunRoll(
-                System.currentTimeMillis(),
+                System.currentTimeMillis().toUTC(), //? all time is in UTC
                 Duration.ofMillis(interval.longValue)
             ) {
                 Log.d("PulseService", "Running request")

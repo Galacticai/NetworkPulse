@@ -17,6 +17,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.galacticai.networkpulse.R
+import com.galacticai.networkpulse.common.fromUTC
 import com.galacticai.networkpulse.common.models.bit_value.BitUnit
 import com.galacticai.networkpulse.common.models.bit_value.BitUnitBase
 import com.galacticai.networkpulse.common.models.bit_value.BitUnitExponent
@@ -31,7 +32,7 @@ import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarValueStyle
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.isSuccess
 import com.galacticai.networkpulse.models.settings.Setting
-import com.galacticai.networkpulse.ui.common.localized
+import com.galacticai.networkpulse.ui.util.localized
 import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -121,8 +122,9 @@ fun RecordRangeChart(
         ),
         parser = parser ?: {
             val unit = TimeUnit.MILLISECONDS
-            val m = (unit.toMinutes(it.time) % 60).localized()
-            val s = (unit.toSeconds(it.time) % 60).localized()
+            val timeMS = it.time.fromUTC()
+            val m = (unit.toMinutes(timeMS) % 60).localized()
+            val s = (unit.toSeconds(timeMS) % 60).localized()
             val mSuffix = context.getString(R.string.minute_suffix)
             val sSuffix = context.getString(R.string.second_suffix)
             val label = "$m$mSuffix $s$sSuffix"

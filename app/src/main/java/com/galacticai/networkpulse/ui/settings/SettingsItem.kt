@@ -23,7 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
-import com.galacticai.networkpulse.ui.common.Consistent
+import com.galacticai.networkpulse.ui.util.Consistent
 
 open class SettingsItem(
     val title: String? = null,

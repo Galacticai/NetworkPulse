@@ -1,4 +1,4 @@
-package com.galacticai.networkpulse.ui.common
+package com.galacticai.networkpulse.ui.util
 
 import android.annotation.SuppressLint
 import android.app.Activity

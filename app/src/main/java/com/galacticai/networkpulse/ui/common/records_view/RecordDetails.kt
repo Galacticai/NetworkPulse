@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,18 +28,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.format
+import com.galacticai.networkpulse.common.fromUTC
 import com.galacticai.networkpulse.common.models.bit_value.BitUnit
 import com.galacticai.networkpulse.common.models.bit_value.BitUnitBase
 import com.galacticai.networkpulse.common.models.bit_value.BitUnitExponent
 import com.galacticai.networkpulse.common.models.bit_value.BitValue
+import com.galacticai.networkpulse.common.toUTC
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.downSize
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.isSuccess
-import com.galacticai.networkpulse.ui.common.Consistent
-import com.galacticai.networkpulse.ui.common.durationSuffixes
-import com.galacticai.networkpulse.ui.common.localized
-import com.galacticai.networkpulse.ui.common.localizedDot
+import com.galacticai.networkpulse.ui.util.Consistent
+import com.galacticai.networkpulse.ui.util.durationSuffixes
+import com.galacticai.networkpulse.ui.util.localized
+import com.galacticai.networkpulse.ui.util.localizedDot
 import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
@@ -144,15 +145,16 @@ private fun Body(record: SpeedRecord, bodyBG: Color) {
                         .weight(1f),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    val seconday = colorResource(R.color.secondary)
                     Text(
                         text = title,
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center,
-                        color = colorResource(R.color.secondary)
+                        color = seconday
                     )
                     Divider(
                         modifier = Modifier.padding(vertical = 1.dp),
-                        color = primaryContainer,
+                        color = seconday.copy(.25f),
                         thickness = 1.dp
                     )
                     Text(
@@ -171,12 +173,14 @@ private fun Body(record: SpeedRecord, bodyBG: Color) {
             ) { it.localized() }
             row {
                 val locale = Locale.getDefault()
+                val timeMS = record.time.fromUTC()
                 val date = SimpleDateFormat("dd/MM/yyyy\nEEEE", locale)
-                    .format(record.time)
+                    .format(timeMS)
                 val time = SimpleDateFormat("h:mm:ss\na", locale)
-                    .format(record.time)
-                val timeRelative = formatDuration(System.currentTimeMillis() - record.time) +
-                        "\n${stringResource(R.string.time_ago)}"
+                    .format(timeMS)
+                val timeRelative = formatDuration(
+                    System.currentTimeMillis().toUTC() - timeMS
+                ) + "\n${stringResource(R.string.time_ago)}"
 
                 stat(stringResource(R.string.date), date)
                 stat(stringResource(R.string.time), time)

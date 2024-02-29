@@ -3,7 +3,6 @@ package com.galacticai.networkpulse.ui.main
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,7 +18,7 @@ import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.ui.CubicChart
 import com.galacticai.networkpulse.common.ui.CubicChartData
 import com.galacticai.networkpulse.models.settings.Setting
-import com.galacticai.networkpulse.ui.common.Consistent
+import com.galacticai.networkpulse.ui.util.Consistent
 
 @Composable
 fun HourGraph(data: CubicChartData) {
@@ -31,7 +30,7 @@ fun HourGraph(data: CubicChartData) {
 
     Surface(
         color = colorResource(R.color.background),
-        shape =Consistent.shape,
+        shape = Consistent.shape,
         border = BorderStroke(1.dp, colorResource(R.color.surface)),
     ) {
         CubicChart(

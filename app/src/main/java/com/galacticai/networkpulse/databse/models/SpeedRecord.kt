@@ -7,6 +7,12 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import okhttp3.Response
 
+/** A snapshot of the network speed and status at a given time
+ * @param time unix timestamp in milliseconds (in UTC)
+ * @param status result status
+ * @param runtimeMS duration (in milliseconds) it took to get this snapshot
+ * @param up upload speed in bytes per second or null if status is not successful
+ * @param down download speed in bytes per second or null if status is not successful */
 @Entity(tableName = SpeedRecordUtils.tableName)
 data class SpeedRecord(
     @PrimaryKey
@@ -99,7 +105,7 @@ object SpeedRecordUtils {
             }
         }
         val consideredSuccess = success > 0
-        val time = this[0].time
+        val time = first().time
         val status: Int
         val runtimeMS: Int
         val up: Float?

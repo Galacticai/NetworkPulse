@@ -3,6 +3,7 @@ package com.galacticai.networkpulse.common.models.patient_task_queue
 import android.os.CancellationSignal
 import android.util.Log
 import com.galacticai.networkpulse.common.models.FutureValue
+import com.galacticai.networkpulse.common.toUTC
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -262,7 +263,7 @@ class PatientTaskQueue<K : Comparable<K>, V> {
         info.value =
             FutureValue.Stopped(
                 running.startedAt!!,
-                Duration.ofMillis(System.currentTimeMillis() - running.startedAt.time)
+                Duration.ofMillis(System.currentTimeMillis().toUTC() - running.startedAt.time)
             )
         return true
     }

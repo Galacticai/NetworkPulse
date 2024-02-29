@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -46,8 +45,8 @@ import com.galacticai.networkpulse.models.settings.Setting
 import com.galacticai.networkpulse.models.settings.Setting.ValueUnitBase.JsonableBitUnitBase.Companion.jsonable
 import com.galacticai.networkpulse.ui.MainActivity
 import com.galacticai.networkpulse.ui.PrepareActivity
-import com.galacticai.networkpulse.ui.common.Consistent
-import com.galacticai.networkpulse.ui.common.Consistent.screenHPadding
+import com.galacticai.networkpulse.ui.util.Consistent
+import com.galacticai.networkpulse.ui.util.Consistent.screenHPadding
 import com.galacticai.networkpulse.ui.common.TopBar
 import com.galacticai.networkpulse.ui.dialogs.reloadAppDialog
 import com.galacticai.networkpulse.ui.dialogs.resetDialog

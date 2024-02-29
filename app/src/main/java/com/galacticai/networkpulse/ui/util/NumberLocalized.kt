@@ -1,4 +1,4 @@
-package com.galacticai.networkpulse.ui.common
+package com.galacticai.networkpulse.ui.util
 
 import java.text.NumberFormat
 

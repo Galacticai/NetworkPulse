@@ -5,7 +5,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.models.records_summary.RecordsSummary
-import com.galacticai.networkpulse.ui.common.localized
+import com.galacticai.networkpulse.ui.util.localized
 
 @Composable
 fun CountStats(summary: RecordsSummary) {

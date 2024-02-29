@@ -1,5 +1,6 @@
 package com.galacticai.networkpulse.models.records_summary
 
+import com.galacticai.networkpulse.common.fromUTC
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.downSize
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.isSuccess
@@ -108,7 +109,7 @@ data class RecordsSummary(
             )
 
             return RecordsSummary(
-                time,
+                time.fromUTC(),
                 allCount,
                 successCount,
                 failCount,
@@ -256,14 +257,14 @@ data class RecordsSummary(
             val up: AverageInfo<Float> = AverageInfo(
                 if (successCount == 0) 0f
                 else (upTotal / successCount).toFloat(),
-                TimedValue(upMax, upMaxTime),
-                TimedValue(upMin, upMinTime),
+                TimedValue(upMax, upMaxTime.fromUTC()),
+                TimedValue(upMin, upMinTime.fromUTC()),
             )
             val down: AverageInfo<Float> = AverageInfo(
                 if (successCount == 0) 0f
                 else (downTotal / successCount).toFloat(),
-                TimedValue(downMax, downMaxTime),
-                TimedValue(downMin, downMinTime),
+                TimedValue(downMax, downMaxTime.fromUTC()),
+                TimedValue(downMin, downMinTime.fromUTC()),
             )
             val runtimeMSSuccess: AverageInfo<Int> = AverageInfo(
                 if (successCount == 0) 0
@@ -281,18 +282,18 @@ data class RecordsSummary(
             val longestSuccessStreakValue = TimedRangeValue(
                 longestSuccessStreak,
                 if (longestSuccessStreakFrom == Long.MAX_VALUE) 0L
-                else longestSuccessStreakFrom,
-                max(0L, longestSuccessStreakTo),
+                else longestSuccessStreakFrom.fromUTC(),
+                max(0L, longestSuccessStreakTo.fromUTC()),
             )
             val longestFailStreakValue = TimedRangeValue(
                 longestFailStreak,
                 if (longestFailStreakFrom == Long.MAX_VALUE) 0L
-                else longestFailStreakFrom,
-                max(0L, longestFailStreakTo),
+                else longestFailStreakFrom.fromUTC(),
+                max(0L, longestFailStreakTo.fromUTC()),
             )
 
             return RecordsSummary(
-                time,
+                time.fromUTC(),
                 allCount,
                 successCount,
                 failCount,

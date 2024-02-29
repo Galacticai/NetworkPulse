@@ -2,8 +2,10 @@ package com.galacticai.networkpulse.common
 
 import java.time.Instant
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.util.TimeZone
+
 
 private const val s = 1000
 private const val m = 60 * s
@@ -48,3 +50,18 @@ fun Long.getMinute(zoneId: ZoneId = ZoneId.systemDefault()): Int =
 fun Long.getHour(zoneId: ZoneId = ZoneId.systemDefault()): Int =
     ZonedDateTime.ofInstant(Instant.ofEpochMilli(this), zoneId)
         .hour
+
+fun Long.fromUTC(to: ZoneId = ZoneId.systemDefault()): Long =
+    convertTimezone(ZoneOffset.UTC, to)
+
+fun Long.toUTC(from: ZoneId = ZoneId.systemDefault()): Long =
+    convertTimezone(from, ZoneOffset.UTC)
+
+fun Long.convertTimezone(from: ZoneId, to: ZoneId): Long =
+    ZonedDateTime.ofInstant(
+        Instant.ofEpochMilli(this),
+        from
+    )
+        .withZoneSameInstant(to)
+        .toInstant()
+        .toEpochMilli()

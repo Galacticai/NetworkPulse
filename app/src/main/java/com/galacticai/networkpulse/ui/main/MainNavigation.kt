@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.galacticai.networkpulse.R
-import com.galacticai.networkpulse.ui.common.Consistent
+import com.galacticai.networkpulse.ui.util.Consistent
 import com.galacticai.networkpulse.ui.main.screens.MainScreen
 
 @Composable

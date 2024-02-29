@@ -3,6 +3,7 @@ package com.galacticai.networkpulse.ui
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.galacticai.networkpulse.common.toUTC
 import com.galacticai.networkpulse.databse.LocalDatabase
 import com.galacticai.networkpulse.databse.SpeedRecordsDAO
 import com.galacticai.networkpulse.databse.models.SpeedRecord
@@ -42,7 +43,7 @@ class MainActivityViewModel : ViewModel() {
     private suspend fun getChartValuesFromDB(): List<SpeedRecord> =
         withContext(Dispatchers.IO) {
             val recentRecordsAfterTime = dao.getNewestTime() - recentRecordsTime
-            dao.getBetween(recentRecordsAfterTime, System.currentTimeMillis())
+            dao.getBetween(recentRecordsAfterTime, System.currentTimeMillis().toUTC())
         }
 
     fun rollRecentRecords(record: SpeedRecord) {
@@ -50,7 +51,9 @@ class MainActivityViewModel : ViewModel() {
             .orEmpty()
             .trimLeadingToSize(2000)
             .toMutableList()
-        records.retainAll { it.time >= recentRecordsTime }
+        val now = System.currentTimeMillis()
+            .toUTC() //? compare all in utc instead of converting every one to system time
+        records.retainAll { it.time >= now - recentRecordsTime }
         records.add(record)
         recentRecords.postValue(records)
     }

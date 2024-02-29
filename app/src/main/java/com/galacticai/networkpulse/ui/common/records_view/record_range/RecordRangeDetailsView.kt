@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
@@ -29,10 +28,10 @@ import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarData
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.sorted
 import com.galacticai.networkpulse.models.records_summary.RecordsSummary
-import com.galacticai.networkpulse.ui.common.Consistent
-import com.galacticai.networkpulse.ui.common.durationSuffixes
-import com.galacticai.networkpulse.ui.common.localized
-import com.galacticai.networkpulse.ui.common.localizedDot
+import com.galacticai.networkpulse.ui.util.Consistent
+import com.galacticai.networkpulse.ui.util.durationSuffixes
+import com.galacticai.networkpulse.ui.util.localized
+import com.galacticai.networkpulse.ui.util.localizedDot
 import com.galacticai.networkpulse.ui.common.records_view.RecordRangeChart
 import kotlin.time.Duration
 

@@ -1,6 +1,6 @@
 package com.galacticai.networkpulse.ui.main.screens
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,11 +13,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.galacticai.networkpulse.common.fromUTC
 import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarData
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.sorted
 import com.galacticai.networkpulse.ui.MainActivity
 import com.galacticai.networkpulse.ui.common.AppTitle
+import com.galacticai.networkpulse.ui.common.NoRecordsMessage
 import com.galacticai.networkpulse.ui.common.records_view.record_range.RecordRangeDetailsView
 import com.galacticai.networkpulse.ui.common.records_view.record_range.toColorChartDataPerMinute
 import java.text.SimpleDateFormat
@@ -42,7 +44,15 @@ fun OverviewScreen() {
                     start = 10.dp, end = 10.dp,
                 )
         )
-        AnimatedVisibility(visible = recentRecords.isNotEmpty()) {
+        AnimatedContent(
+            targetState = recentRecords.isEmpty(),
+            label = "OverviewScreenAnimation"
+        ) { isEmpty ->
+            if (isEmpty) {
+                NoRecordsMessage()
+                return@AnimatedContent
+            }
+
             RecordRangeDetailsView(
                 records = recentRecords,
                 recordsSimplified = recentRecords.sorted().toColorChartDataPerMinute(),
@@ -54,7 +64,7 @@ fun OverviewScreen() {
                 },
             ) {
                 val timestamp = SimpleDateFormat("h:mm:ss a", Locale.getDefault())
-                    .format(it.time)
+                    .format(it.time.fromUTC())
                 val value = it.down ?: 0f
                 BarData(timestamp, value)
             }

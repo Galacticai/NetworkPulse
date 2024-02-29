@@ -21,12 +21,13 @@ import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.atStartOfDayMS
 import com.galacticai.networkpulse.common.atStartOfHourMS
+import com.galacticai.networkpulse.common.fromUTC
 import com.galacticai.networkpulse.common.getHour
 import com.galacticai.networkpulse.common.getMinute
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.sorted
-import com.galacticai.networkpulse.ui.common.Consistent
+import com.galacticai.networkpulse.ui.util.Consistent
 import java.time.ZoneId
 import java.util.SortedSet
 
@@ -116,7 +117,7 @@ fun SortedSet<SpeedRecord>.toColorChartDataPerMinute(
 ): ColorChartData {
     val map = mutableMapOf<Int, MutableList<Float>>()
     for (record in this) {
-        val minute = record.time.getMinute(zoneId)
+        val minute = record.time.fromUTC().getMinute(zoneId)
         map.getOrPut(minute) { mutableListOf() }
             .add(record.down ?: 0f)
     }
@@ -134,9 +135,10 @@ fun SortedSet<SpeedRecord>.toHourColorChartData(
         ?: return range.map { null }
     val map = mutableMapOf<Int, MutableList<Float>>()
     for (record in this) {
-        val hourR = record.time.atStartOfHourMS(zoneId)
+        val timeMS = record.time.fromUTC()
+        val hourR = timeMS.atStartOfHourMS(zoneId)
         if (hourR != hour) break
-        val minute = record.time.getMinute(zoneId)
+        val minute = timeMS.getMinute(zoneId)
         map.getOrPut(minute) { mutableListOf() }
             .add(record.down ?: 0f)
     }
@@ -152,13 +154,14 @@ fun SortedSet<SpeedRecord>.toDayColorChartData(
     zoneId: ZoneId = ZoneId.systemDefault()
 ): ColorChartData {
     val range = 1 until 24
-    val day = firstOrNull()?.time?.atStartOfDayMS(zoneId)
+    val day = firstOrNull()?.time?.fromUTC()?.atStartOfDayMS(zoneId)
         ?: return range.map { null }
     val map = mutableMapOf<Int, MutableList<Float>>()
     for (record in this) {
-        val dayR = record.time.atStartOfDayMS(zoneId)
+        val timeMS = record.time.fromUTC()
+        val dayR = timeMS.atStartOfDayMS(zoneId)
         if (dayR != day) break
-        val hour = record.time.getHour(zoneId)
+        val hour = timeMS.getHour(zoneId)
         map.getOrPut(hour) { mutableListOf() }
             .add(record.down ?: 0f)
     }
