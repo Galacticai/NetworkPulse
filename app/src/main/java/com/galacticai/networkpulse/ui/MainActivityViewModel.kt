@@ -1,66 +1,59 @@
 package com.galacticai.networkpulse.ui
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.galacticai.networkpulse.common.toUTC
 import com.galacticai.networkpulse.databse.LocalDatabase
-import com.galacticai.networkpulse.databse.SpeedRecordsDAO
+import com.galacticai.networkpulse.databse.SpeedRecordRepository
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.models.settings.Setting
 import com.galacticai.networkpulse.services.PulseService
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.greenrobot.eventbus.EventBus
 
-class MainActivityViewModel : ViewModel() {
-    lateinit var dao: SpeedRecordsDAO
+class MainActivityViewModel(private val application: Application) : AndroidViewModel(application) {
+    val repo = SpeedRecordRepository(
+        LocalDatabase.getDB(application).speedRecordsDAO(),
+        application,
+        viewModelScope
+    )
+
     private var recentRecordsTime = Setting.RecentRecordsTime.defaultValue
-    private var startedService: Boolean = false
+    private var startedPulseService = false
     val recentRecords = MutableLiveData<List<SpeedRecord>>(emptyList())
 
-    fun init(activity: MainActivity) {
-        dao = LocalDatabase.getDBMainThread(activity).speedRecordsDAO()
-        viewModelScope.launch {
-            val values = getChartValuesFromDB()
-            recentRecords.value = values
-            recentRecordsTime = Setting.RecentRecordsTime.get(activity)
-
-            val start = Setting.EnablePulseService.get(activity)
-            if (start) {
-                PulseService.startIfNotRunning(activity)
-                EventBus.getDefault().register(activity)
-                startedService = true
-            }
+    fun init() = viewModelScope.launch {
+        val start = Setting.EnablePulseService.get(application)
+        if (start) {
+            PulseService.startIfNotRunning(application)
+            //EventBus.getDefault().register(application)
+            startedPulseService = true
         }
     }
 
-    fun onDestroy(activity: MainActivity) {
-        if (startedService) EventBus.getDefault().unregister(activity)
-    }
-
-    private suspend fun getChartValuesFromDB(): List<SpeedRecord> =
-        withContext(Dispatchers.IO) {
-            val recentRecordsAfterTime = dao.getNewestTime() - recentRecordsTime
-            dao.getBetween(recentRecordsAfterTime, System.currentTimeMillis().toUTC())
+    fun end( ) = viewModelScope.launch {
+        if (startedPulseService) {
+            //EventBus.getDefault().unregister(activity)
+            startedPulseService = false
         }
+    }
 
     fun rollRecentRecords(record: SpeedRecord) {
         val records = recentRecords.value
             .orEmpty()
             .trimLeadingToSize(2000)
             .toMutableList()
-        val now = System.currentTimeMillis()
+        val nowUTC = System.currentTimeMillis().toUTC()
             .toUTC() //? compare all in utc instead of converting every one to system time
-        records.retainAll { it.time >= now - recentRecordsTime }
+        records.retainAll { it.time >= nowUTC - recentRecordsTime }
         records.add(record)
         recentRecords.postValue(records)
     }
 }
 
 fun <T> List<T>.trimLeadingToSize(size: Int): List<T> {
-    require(size >= 0) { "Size must be non-negative" }
+    require(size >= 0) { "Size must be non-negative: size=$size" }
     return if (size >= this.size) this
     else this.subList(this.size - size, this.size)
 }

@@ -5,17 +5,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.galacticai.networkpulse.common.fromUTC
 import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarData
-import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.sorted
 import com.galacticai.networkpulse.ui.MainActivity
 import com.galacticai.networkpulse.ui.common.AppTitle
@@ -28,14 +24,14 @@ import java.util.Locale
 
 @Composable
 fun OverviewScreen() {
-    val mainActivity = LocalContext.current as MainActivity
-    var recentRecords by remember { mutableStateOf<List<SpeedRecord>>(emptyList()) }
-    LaunchedEffect(mainActivity.viewModel.recentRecords) {
-        mainActivity.viewModel.recentRecords
-            .observe(mainActivity) { recentRecords = it }
-    }
+    val activity = LocalContext.current as MainActivity
+    val recentRecords by activity.viewModel.repo.recentRecordsLive.observeAsState(emptyList())
 
-    Column(modifier = Modifier.padding(horizontal = 10.dp)) {
+    Column(
+        modifier = Modifier.padding(
+            horizontal = 10.dp
+        )
+    ) {
         AppTitle(
             modifier = Modifier
                 .fillMaxWidth()
@@ -45,7 +41,7 @@ fun OverviewScreen() {
                 )
         )
         AnimatedContent(
-            targetState = recentRecords.isEmpty(),
+            targetState = recentRecords.isNullOrEmpty(),
             label = "OverviewScreenAnimation"
         ) { isEmpty ->
             if (isEmpty) {
@@ -57,10 +53,10 @@ fun OverviewScreen() {
                 records = recentRecords,
                 recordsSimplified = recentRecords.sorted().toColorChartDataPerMinute(),
                 onRecordDeleted = {
-                    val list = mainActivity.viewModel.recentRecords.value
+                    val list = activity.viewModel.recentRecords.value
                         .orEmpty().toMutableList()
                     list.remove(it)
-                    mainActivity.viewModel.recentRecords.value = list
+                    activity.viewModel.recentRecords.value = list
                 },
             ) {
                 val timestamp = SimpleDateFormat("h:mm:ss a", Locale.getDefault())

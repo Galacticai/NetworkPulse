@@ -8,11 +8,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -30,10 +27,7 @@ import com.guru.fontawesomecomposelib.FaIcons
 @Composable
 fun DashboardScreen() {
     val activity = LocalContext.current as MainActivity
-    var recordsCount by rememberSaveable { mutableIntStateOf(0) }
-    LaunchedEffect(Unit) {
-        recordsCount = activity.viewModel.dao.countAll()
-    }
+    val recordsCount by activity.viewModel.repo.countAllLive.observeAsState(0)
 
     Column(
         modifier = Modifier

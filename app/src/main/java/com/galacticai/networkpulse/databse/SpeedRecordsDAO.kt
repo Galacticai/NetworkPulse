@@ -8,71 +8,70 @@ import androidx.room.Query
 import androidx.room.Update
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.models.DayRange
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SpeedRecordsDAO {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(vararg records: SpeedRecord)
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun insertOrIgnore(vararg records: SpeedRecord)
-
     @Update
     fun update(vararg record: SpeedRecord)
 
-    @Query("SELECT MIN(time) FROM logs")
+    @Query("select MIN(time) from logs")
     fun getOldestTime(): Long
 
-    @Query("SELECT MAX(time) FROM logs")
-    fun getNewestTime(): Long
+    @Query("select MAX(time) from logs")
+    fun getNewestTime(): Flow<Long>
 
-    @Query("SELECT * FROM logs WHERE time=:time")
+    @Query("select * from logs where time=:time")
     fun get(time: Long): SpeedRecord
 
+    /** Get the ranges of days (first and last time recorded per day as [DayRange]) */
     @Query(
-        "SELECT" +
-                " MIN(time) as first," +
-                " MAX(time) as last" +
-                " FROM logs" +
-                " GROUP BY strftime('%Y%m%d', time/1000, 'unixepoch')"
+        "select" +
+                " min(time) as first," +
+                " max(time) as last" +
+                " from logs" +
+                " group by cast((time/86400000) as int)" //? 24 * 60 * 60 * 1000
     )
-    fun getDays(): List<DayRange>
+    fun getDays(): Flow<List<DayRange>>
 
 
-    @Query("SELECT COUNT(*) FROM logs")
-    fun countAll(): Int
+    @Query("select count(*) from logs")
+    fun countAll(): Flow<Int>
 
     @Query(
-        "SELECT COUNT(*) FROM logs" +
-                " WHERE time BETWEEN :from AND :to"
+        "select count(*) from logs" +
+                " where time between :from and :to"
     )
-    fun countBetween(from: Long, to: Long): Int
+    fun countBetween(from: Long, to: Long): Flow<Int>
 
     /** Nearest time after to the provided [time] or null */
     @Query(
-        "SELECT MIN(time) FROM logs" +
-                " WHERE time > :time"
+        "select min(time) from logs" +
+                " where time > :time"
     )
     fun getNearestNext(time: Long): Long?
 
     /** Nearest time prior to the provided [time] or null */
     @Query(
-        "SELECT MAX(time) FROM logs" +
-                " WHERE time < :time"
+        "select max(time) from logs" +
+                " where time < :time"
     )
     fun getNearestPrior(time: Long): Long?
 
     @Query(
-        "SELECT * FROM logs" +
-                " WHERE time BETWEEN :from AND :to"
+        "select * from logs" +
+                " where time between :from and :to"
     )
-    fun getBetween(from: Long, to: Long): List<SpeedRecord>
+    fun getBetween(from: Long, to: Long): Flow<List<SpeedRecord>>
 
     @Query(
-        "SELECT * FROM logs " +
-                " WHERE time BETWEEN :from AND :to" +
-                " AND up>:up" +
-                " AND down>:down"
+        "select * from logs " +
+                " where time between :from and :to" +
+                " and up>:up" +
+                " and down>:down"
     )
     fun getBetweenFasterThan(
         from: Long, to: Long,
@@ -80,11 +79,11 @@ interface SpeedRecordsDAO {
     ): List<SpeedRecord>
 
     @Query(
-        "SELECT * FROM logs" +
-                " WHERE time" +
-                " BETWEEN :from AND :to" +
-                " AND up<:up" +
-                " AND down<:down"
+        "select * from logs" +
+                " where time" +
+                " between :from and :to" +
+                " and up<:up" +
+                " and down<:down"
     )
     fun getBetweenSlowerThan(
         from: Long, to: Long,
@@ -94,9 +93,9 @@ interface SpeedRecordsDAO {
     @Delete
     fun delete(vararg record: SpeedRecord)
 
-    @Query("DELETE FROM logs WHERE time IN (:times)")
+    @Query("delete from logs where time IN(:times)")
     fun delete(vararg times: Long)
 
-    @Query("DELETE FROM logs WHERE time < :time")
+    @Query("delete from logs where time<:time")
     fun deleteOlderThan(time: Long)
 }

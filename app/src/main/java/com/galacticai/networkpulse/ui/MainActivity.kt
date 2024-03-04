@@ -27,18 +27,18 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent { MainActivityContent() }
-        viewModel.init(this)
+        viewModel.init()
     }
 
     override fun onDestroy() {
-        viewModel.onDestroy(this)
+        viewModel.end()
         super.onDestroy()
     }
 
 
     @Subscribe
     fun onPulseDone(ev: PulseService.PulseEvent.DoneEvent) {
-        viewModel.rollRecentRecords(ev.record)
+        //viewModel.rollRecentRecords(ev.record)
         Log.d(
             "PulseService",
             "Pulse done (d=${ev.record.down}, t=${ev.record.time}, r=${ev.record.runtimeMS})"
@@ -47,7 +47,7 @@ class MainActivity : AppCompatActivity() {
 
     @Subscribe
     fun onPulseError(ev: PulseService.PulseEvent.ErrorEvent) {
-        viewModel.rollRecentRecords(ev.record)
+        //viewModel.rollRecentRecords(ev.record)
         Log.d(
             "PulseService",
             "Pulse error (e=${ev.error.message}, t=${ev.record.time}, r=${ev.runtime})"

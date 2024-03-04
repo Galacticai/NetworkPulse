@@ -77,12 +77,11 @@ import java.time.ZoneId
 import java.util.Calendar
 import java.util.Locale
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun RecordRangeList(
     modifier: Modifier = Modifier,
     records: List<SpeedRecord>,
-    reversed: Boolean = false,
     onRecordDeleted: ((SpeedRecord) -> Unit)? = null,
 ) {
     val context = LocalContext.current
@@ -105,21 +104,11 @@ fun RecordRangeList(
             .then(modifier)
     ) {
         var legendHeight by rememberSaveable { mutableIntStateOf(0) }
-        val recordsInOrder = if (reversed) records.reversed() else records
-        val maxValue = records.downMax
+        val maxValue by remember(records) { derivedStateOf { records.downMax } }
 
-        //? cache: utc time to system time
-        var inSystemTime by rememberSaveable { mutableStateOf<Map<Long, Long>>(emptyMap()) }
-        val groupedByDay by remember(recordsInOrder) {
+        val groupedByDay by remember(records) {
             derivedStateOf {
-                val newMap = mutableMapOf<Long, Long>()
-                val byDay = recordsInOrder.groupBy { r ->
-                    val day = r.time.fromUTC(zoneId)
-                    newMap[r.time] = day
-                    return@groupBy day.atStartOfDayMS(zoneId)
-                }
-                inSystemTime = newMap
-                return@derivedStateOf byDay
+                records.groupBy { r -> r.time.atStartOfDayMS(zoneId) }
             }
         }
 
@@ -135,7 +124,7 @@ fun RecordRangeList(
                     if (addSpace) item { Spacer(Modifier.height(20.dp)) }
 
                     val groupedByHour = dayRecords.groupBy { r ->
-                        inSystemTime[r.time]!!.atStartOfHourMS(zoneId)
+                        r.time.atStartOfHourMS(zoneId)
                     }
 
                     stickyHeader { DayHeader(day, groupedByHour, records.size, locale) }

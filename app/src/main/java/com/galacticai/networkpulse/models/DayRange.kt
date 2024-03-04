@@ -15,7 +15,7 @@ data class DayRange(val first: Long, val last: Long) : Parcelable {
     override fun describeContents() = 0
 
     companion object CREATOR : Parcelable.Creator<DayRange> {
-        override fun createFromParcel(parcel: Parcel): DayRange = DayRange(parcel)
-        override fun newArray(size: Int): Array<DayRange?> = arrayOfNulls(size)
+        override fun createFromParcel(parcel: Parcel) = DayRange(parcel)
+        override fun newArray(size: Int) = arrayOfNulls<DayRange?>(size)
     }
 }

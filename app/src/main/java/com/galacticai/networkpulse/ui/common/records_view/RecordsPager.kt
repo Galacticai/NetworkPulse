@@ -14,9 +14,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.ModalBottomSheet
@@ -28,9 +28,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,7 +44,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
-import com.galacticai.networkpulse.models.DayRange
 import com.galacticai.networkpulse.ui.MainActivity
 import com.galacticai.networkpulse.ui.common.NoRecordsMessage
 import com.galacticai.networkpulse.ui.main.RecordRangeList
@@ -62,11 +61,8 @@ import java.util.Locale
 @Composable
 fun RecordsPager(modifier: Modifier = Modifier) {
     val activity = LocalContext.current as MainActivity
-    var days by rememberSaveable { mutableStateOf<List<DayRange>>(emptyList()) }
-
-    LaunchedEffect(Unit) {
-        days = activity.viewModel.dao.getDays()
-    }
+    val repo = activity.viewModel.repo
+    val days by repo.daysLive.observeAsState(emptyList())
 
     if (days.isEmpty()) {
         NoRecordsMessage()
@@ -96,23 +92,14 @@ fun RecordsPager(modifier: Modifier = Modifier) {
             pageSpacing = 20.dp,
             modifier = Modifier.weight(1f),
         ) { page ->
-            //? state update on demand
-            var dummyLoader by remember { mutableStateOf(false) }
-            fun reload() {
-                dummyLoader = !dummyLoader
-            }
 
-            val dayRange by remember(days, dummyLoader) { derivedStateOf { days[page] } }
-            val dayRecords by remember(dayRange) {
-                derivedStateOf {
-                    activity.viewModel.dao.getBetween(dayRange.first, dayRange.last)
-                }
-            }
+            val dayRange by remember(days) { derivedStateOf { days[page] } }
+            val dayRecords by repo.getBetweenLive(dayRange.first, dayRange.last).observeAsState(emptyList())
+
             RecordRangeList(
                 modifier = Modifier.fillMaxSize(),
-                records = dayRecords,
-                reversed = true,
-                onRecordDeleted = { reload() },
+                records = dayRecords.reversed(),
+                //onRecordDeleted = { reload() },
             )
         }
 
@@ -136,13 +123,15 @@ fun RecordsPager(modifier: Modifier = Modifier) {
             var pickingDay by remember { mutableStateOf(false) }
             val sheetState = rememberModalBottomSheetState()
             if (pickingDay) {
+                val daysAndCount by repo.daysAndCountLive.observeAsState()
+
+                val currentPageReversed by remember(pagerState) {
+                    derivedStateOf { pagerState.pageCount - pagerState.currentPage - 1 }
+                }
                 DayPicker(
                     sheetState = sheetState,
-                    currentDay = days[pagerState.currentPage].first,
-                    days = days.associate {
-                        it.first to
-                                activity.viewModel.dao.countBetween(it.first, it.last)
-                    },
+                    currentDay = days[currentPageReversed].first,
+                    days = daysAndCount ?: emptyMap(),
                     onDismissRequest = { pickingDay = false },
                 ) {
                     scrollTo(it)
@@ -187,11 +176,11 @@ fun RecordsPager(modifier: Modifier = Modifier) {
                 val currentDayString = SimpleDateFormat("dd/M/yyyy", Locale.getDefault())
                     .format(days[pagerState.currentPage].first)
                 Text(currentDayString)
-                Divider(
+                HorizontalDivider(
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = 5.dp),
-                    color = colorResource(R.color.primary).copy(.25f),
+                    color = colorResource(R.color.primary).copy(.25f)
                 )
                 Text(
                     (pagerState.currentPage + 1).localized(),

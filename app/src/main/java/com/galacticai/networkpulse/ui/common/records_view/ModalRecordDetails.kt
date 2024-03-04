@@ -19,12 +19,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewModelScope
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils
 import com.galacticai.networkpulse.ui.MainActivity
 import com.galacticai.networkpulse.ui.common.ConfirmationButtons
 import com.galacticai.networkpulse.ui.util.Consistent
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 
@@ -36,7 +39,13 @@ fun ModalRecordDetails(
     onRecordDeleted: (() -> Unit)? = null,
     onDismissRequest: () -> Unit
 ) {
+    fun dismiss() {
+        MainScope().launch { state.hide() }
+        onDismissRequest()
+    }
+
     val context = LocalContext.current
+
     ModalBottomSheet(
         sheetState = state,
         dragHandle = null,
@@ -61,13 +70,16 @@ fun ModalRecordDetails(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             ConfirmationButtons(stringResource(R.string.delete)) {
-                (context as MainActivity).viewModel.dao.delete(record)
+                val activity = context as MainActivity
+                activity.viewModel.viewModelScope.launch {
+                    activity.viewModel.repo.delete(record)
+                }
                 onRecordDeleted?.invoke()
-                onDismissRequest()
+                dismiss()
             }
 
             Spacer(modifier = Modifier.width(10.dp))
-            Button(onClick = onDismissRequest) {
+            Button(onClick = { dismiss() }) {
                 Text(stringResource(R.string.ok))
             }
         }
