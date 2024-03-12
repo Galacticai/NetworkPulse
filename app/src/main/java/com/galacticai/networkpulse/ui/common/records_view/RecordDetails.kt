@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,10 +38,10 @@ import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.downSize
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.isSuccess
-import com.galacticai.networkpulse.ui.util.Consistent
-import com.galacticai.networkpulse.ui.util.durationSuffixes
-import com.galacticai.networkpulse.ui.util.localized
-import com.galacticai.networkpulse.ui.util.localizedDot
+import com.galacticai.networkpulse.util.Consistent
+import com.galacticai.networkpulse.util.durationSuffixes
+import com.galacticai.networkpulse.util.localized
+import com.galacticai.networkpulse.util.localizedDot
 import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlin.time.Duration.Companion.milliseconds
@@ -87,11 +87,11 @@ private fun Header(record: SpeedRecord) {
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold
         )
-        Divider(
+        HorizontalDivider(
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 10.dp),
-            color = statusColor.copy(.2f),
+            color = statusColor.copy(.2f)
         )
         Surface(
             modifier = Modifier.padding(2.dp),
@@ -152,10 +152,10 @@ private fun Body(record: SpeedRecord, bodyBG: Color) {
                         textAlign = TextAlign.Center,
                         color = seconday
                     )
-                    Divider(
+                    HorizontalDivider(
                         modifier = Modifier.padding(vertical = 1.dp),
-                        color = seconday.copy(.25f),
-                        thickness = 1.dp
+                        thickness = 1.dp,
+                        color = seconday.copy(.25f)
                     )
                     Text(
                         if (value.contains('\n')) value else "$value\n",

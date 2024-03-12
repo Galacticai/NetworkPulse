@@ -23,9 +23,9 @@ import androidx.lifecycle.viewModelScope
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils
-import com.galacticai.networkpulse.ui.MainActivity
+import com.galacticai.networkpulse.ui.activities.MainActivity
 import com.galacticai.networkpulse.ui.common.ConfirmationButtons
-import com.galacticai.networkpulse.ui.util.Consistent
+import com.galacticai.networkpulse.util.Consistent
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -72,7 +72,7 @@ fun ModalRecordDetails(
             ConfirmationButtons(stringResource(R.string.delete)) {
                 val activity = context as MainActivity
                 activity.viewModel.viewModelScope.launch {
-                    activity.viewModel.repo.delete(record)
+                    activity.repo.delete(record)
                 }
                 onRecordDeleted?.invoke()
                 dismiss()

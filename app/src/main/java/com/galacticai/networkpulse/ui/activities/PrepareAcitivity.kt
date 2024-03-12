@@ -1,4 +1,4 @@
-package com.galacticai.networkpulse.ui
+package com.galacticai.networkpulse.ui.activities
 
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -43,9 +43,9 @@ import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.isIgnoringBatteryOptimization
 import com.galacticai.networkpulse.common.ui.CheckItem
 import com.galacticai.networkpulse.ui.common.ConfirmationButtons
-import com.galacticai.networkpulse.ui.util.Consistent
-import com.galacticai.networkpulse.ui.util.Consistent.screenHPadding
-import com.galacticai.networkpulse.ui.util.Grants
+import com.galacticai.networkpulse.util.Consistent
+import com.galacticai.networkpulse.util.Consistent.screenHPadding
+import com.galacticai.networkpulse.util.Grants
 import com.galacticai.networkpulse.ui.common.ScreenTitle
 import com.galacticai.networkpulse.ui.theme.GalacticTheme
 

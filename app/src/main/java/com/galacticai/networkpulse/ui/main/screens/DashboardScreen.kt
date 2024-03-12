@@ -18,7 +18,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
-import com.galacticai.networkpulse.ui.MainActivity
+import com.galacticai.networkpulse.ui.activities.MainActivity
 import com.galacticai.networkpulse.ui.common.TopBar
 import com.galacticai.networkpulse.ui.common.records_view.RecordsPager
 import com.guru.fontawesomecomposelib.FaIcon
@@ -27,7 +27,7 @@ import com.guru.fontawesomecomposelib.FaIcons
 @Composable
 fun DashboardScreen() {
     val activity = LocalContext.current as MainActivity
-    val recordsCount by activity.viewModel.repo.countAllLive.observeAsState(0)
+    val recordsCount by activity.repo.countAllLive.observeAsState(0)
 
     Column(
         modifier = Modifier

@@ -23,9 +23,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
-import com.galacticai.networkpulse.common.await
 import com.galacticai.networkpulse.models.settings.Setting
-import com.galacticai.networkpulse.ui.util.Consistent
+import com.galacticai.networkpulse.util.Consistent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 
 
 class SettingsSwitch(
@@ -39,7 +40,7 @@ class SettingsSwitch(
     LaunchedEffect(Unit) { value = setting.get(context) }
 
     fun setValue(newValue: Boolean) {
-        await { Setting.Summarize.set(context, newValue) }
+        runBlocking(Dispatchers.IO) { Setting.Summarize.set(context, newValue) }
         value = newValue
         onSwitched?.invoke(value)
     }

@@ -44,11 +44,11 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
-import com.galacticai.networkpulse.ui.MainActivity
+import com.galacticai.networkpulse.ui.activities.MainActivity
 import com.galacticai.networkpulse.ui.common.NoRecordsMessage
 import com.galacticai.networkpulse.ui.main.RecordRangeList
-import com.galacticai.networkpulse.ui.util.Consistent
-import com.galacticai.networkpulse.ui.util.localized
+import com.galacticai.networkpulse.util.Consistent
+import com.galacticai.networkpulse.util.localized
 import com.guru.fontawesomecomposelib.FaIcon
 import com.guru.fontawesomecomposelib.FaIconType
 import com.guru.fontawesomecomposelib.FaIcons
@@ -56,13 +56,17 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.TimeZone
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun RecordsPager(modifier: Modifier = Modifier) {
     val activity = LocalContext.current as MainActivity
-    val repo = activity.viewModel.repo
-    val days by repo.daysLive.observeAsState(emptyList())
+    val timezoneOffset = TimeZone.getDefault().rawOffset
+    
+    val days by activity.repo
+        .daysLive(timezoneOffset)
+        .observeAsState(emptyList())
 
     if (days.isEmpty()) {
         NoRecordsMessage()
@@ -70,9 +74,7 @@ fun RecordsPager(modifier: Modifier = Modifier) {
     }
 
     val pageCount by remember(days) { derivedStateOf { days.size } }
-
     val pagerState = rememberPagerState(pageCount - 1, pageCount = { pageCount })
-
 
     fun scrollTo(page: Int) {
         if (page < 0 || page >= pagerState.pageCount) return
@@ -92,14 +94,14 @@ fun RecordsPager(modifier: Modifier = Modifier) {
             pageSpacing = 20.dp,
             modifier = Modifier.weight(1f),
         ) { page ->
-
             val dayRange by remember(days) { derivedStateOf { days[page] } }
-            val dayRecords by repo.getBetweenLive(dayRange.first, dayRange.last).observeAsState(emptyList())
+            val dayRecords by activity.repo
+                .getBetweenLive(dayRange.first, dayRange.last)
+                .observeAsState(emptyList())
 
             RecordRangeList(
                 modifier = Modifier.fillMaxSize(),
                 records = dayRecords.reversed(),
-                //onRecordDeleted = { reload() },
             )
         }
 
@@ -123,15 +125,18 @@ fun RecordsPager(modifier: Modifier = Modifier) {
             var pickingDay by remember { mutableStateOf(false) }
             val sheetState = rememberModalBottomSheetState()
             if (pickingDay) {
-                val daysAndCount by repo.daysAndCountLive.observeAsState()
-
                 val currentPageReversed by remember(pagerState) {
                     derivedStateOf { pagerState.pageCount - pagerState.currentPage - 1 }
                 }
+                val currentDay by remember(days) {
+                    derivedStateOf { days[currentPageReversed].first }
+                }
+                val daysAndCount by activity.repo.rememberDaysAndCount(timezoneOffset)
+
                 DayPicker(
                     sheetState = sheetState,
-                    currentDay = days[currentPageReversed].first,
-                    days = daysAndCount ?: emptyMap(),
+                    currentDay = currentDay,
+                    days = daysAndCount,
                     onDismissRequest = { pickingDay = false },
                 ) {
                     scrollTo(it)
@@ -216,10 +221,7 @@ private fun DayPicker(
     }
     ModalBottomSheet(
         sheetState = sheetState,
-        onDismissRequest = {
-            MainScope().launch { sheetState.hide() }
-            onDismissRequest()
-        },
+        onDismissRequest = onDismissRequest,
         shape = Consistent.shape,
     ) {
         Text(

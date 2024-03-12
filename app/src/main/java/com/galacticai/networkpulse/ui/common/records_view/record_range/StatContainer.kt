@@ -21,7 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.galacticai.networkpulse.R
-import com.galacticai.networkpulse.ui.util.Consistent
+import com.galacticai.networkpulse.util.Consistent
 
 @Composable
 fun StatContainer(title: String? = null, rowsContent: List<@Composable RowScope.() -> Unit>) {

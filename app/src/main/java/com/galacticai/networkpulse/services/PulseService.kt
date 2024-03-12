@@ -1,8 +1,6 @@
 package com.galacticai.networkpulse.services
 
 import android.annotation.SuppressLint
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
@@ -13,19 +11,19 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.isServiceRunning
 import com.galacticai.networkpulse.common.models.patient_task_queue.PatientTaskEvent
 import com.galacticai.networkpulse.common.models.patient_task_queue.PatientTaskQueue
 import com.galacticai.networkpulse.common.toUTC
 import com.galacticai.networkpulse.databse.LocalDatabase
+import com.galacticai.networkpulse.databse.SpeedRecordsDAO
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordStatus
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils
 import com.galacticai.networkpulse.models.settings.Setting
-import com.galacticai.networkpulse.ui.PrepareActivity
-import com.galacticai.networkpulse.ui.util.Grants
+import com.galacticai.networkpulse.ui.activities.PrepareActivity
+import com.galacticai.networkpulse.util.Grants
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -41,44 +39,22 @@ import kotlin.concurrent.timer
 
 class PulseService : Service() {
     companion object {
+        fun isRunning(context: Context) = context.isServiceRunning<PulseService>()
+
         fun start(context: Context) {
+            if (isRunning(context)) return
             context.startService(Intent(context, PulseService::class.java))
         }
 
-        fun stopIfRunning(context: Context) {
+        fun stop(context: Context) {
             if (!context.isServiceRunning<PulseService>()) return
             context.stopService(Intent(context, PulseService::class.java))
-        }
-
-        fun startIfNotRunning(context: Context): Boolean {
-            if (context.isServiceRunning<PulseService>()) return false
-            start(context)
-            return true
-        }
-
-        fun setupNotificationChannel(context: Context) {
-            val manager = ContextCompat.getSystemService(context, NotificationManager::class.java)
-                ?: throw IllegalStateException("Unable to get NotificationManager")
-
-            if (manager.getNotificationChannel(Grants.PersistentNotification.channelID) != null)
-                return
-
-            val channel = NotificationChannel(
-                Grants.PersistentNotification.channelID,
-                PulseService::class.simpleName,
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                enableVibration(false)
-
-                setSound(null, null)
-                description = "Pulse Service"
-            }
-            manager.createNotificationChannel(channel)
         }
     }
 
     private var interval = mutableLongStateOf(Setting.RequestInterval.defaultValue)
     private var downloadSize = mutableStateOf(Setting.DownloadSize.defaultObject)
+    private lateinit var dao: SpeedRecordsDAO
     private lateinit var timer: Timer
     private lateinit var client: OkHttpClient
 
@@ -86,11 +62,12 @@ class PulseService : Service() {
     private lateinit var queue: PatientTaskQueue<Long, Response>
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        dao = LocalDatabase.getDB(this).speedRecordsDAO()
+
         runBlocking {
             interval.longValue = Setting.RequestInterval.get(this@PulseService)
             downloadSize.value = Setting.DownloadSize.getObject(this@PulseService)
         }
-
         val ms = TimeUnit.MILLISECONDS
         client = OkHttpClient.Builder()
             .connectTimeout(interval.longValue, ms)
@@ -207,9 +184,7 @@ class PulseService : Service() {
                 null,
                 null
             )
-        LocalDatabase.getDB(this).apply {
-            speedRecordsDAO().insert(record)
-        }.close()
+        dao.insert(record)
         event(PulseEvent.TimeoutEvent(ev.key, record, ev.timeout, ev.startedAt))
     }
 
@@ -219,9 +194,7 @@ class PulseService : Service() {
         if (ev.error !is IOException) throw ev.error
 
         val record = SpeedRecordUtils.error(ev.key, ev.runtime.toMillis().toInt())
-        LocalDatabase.getDB(this).apply {
-            speedRecordsDAO().insert(record)
-        }.close()
+        dao.insert(record)
         event(PulseEvent.ErrorEvent(ev.key, record, ev.error, ev.startedAt, ev.runtime))
     }
 
@@ -244,11 +217,7 @@ class PulseService : Service() {
             0f,
             SpeedRecordUtils.getDownSpeed(response, runtime.toMillis().toInt())
         )
-
-        LocalDatabase.getDB(this).apply {
-            speedRecordsDAO().insert(record)
-        }.close()
-
+        dao.insert(record)
         event(PulseEvent.DoneEvent(record))
     }
 
@@ -258,9 +227,7 @@ class PulseService : Service() {
             if (response == null) SpeedRecord(timestamp, 0, runtimeMS, null, null)
             else SpeedRecord(timestamp, response.code, runtimeMS, 0f, 0f)
 
-        LocalDatabase.getDB(this).apply {
-            speedRecordsDAO().insert(record)
-        }.close()
+        dao.insert(record)
         event(PulseEvent.OtherEvent(timestamp, record, response, runtime))
     }
 

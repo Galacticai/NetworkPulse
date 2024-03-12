@@ -5,7 +5,6 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.models.DayRange
 import kotlinx.coroutines.flow.Flow
@@ -15,8 +14,14 @@ interface SpeedRecordsDAO {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(vararg records: SpeedRecord)
 
-    @Update
-    fun update(vararg record: SpeedRecord)
+    @Delete
+    fun delete(vararg record: SpeedRecord)
+
+    @Query("delete from logs where time IN(:times)")
+    fun delete(vararg times: Long)
+
+    @Query("delete from logs where time<:time")
+    fun deleteOlderThan(time: Long)
 
     @Query("select MIN(time) from logs")
     fun getOldestTime(): Long
@@ -27,15 +32,17 @@ interface SpeedRecordsDAO {
     @Query("select * from logs where time=:time")
     fun get(time: Long): SpeedRecord
 
-    /** Get the ranges of days (first and last time recorded per day as [DayRange]) */
+    /** Get the ranges of days (first and last time recorded per day as [DayRange])
+     * @param offsetMS offset in milliseconds from UTC (0 = UTC) */
     @Query(
         "select" +
-                " min(time) as first," +
-                " max(time) as last" +
+                "   min(time) as first," +
+                "   max(time) as last" +
                 " from logs" +
-                " group by cast((time/86400000) as int)" //? 24 * 60 * 60 * 1000
+                " group by" +
+                "   cast(( (time+:offsetMS) / 86400000 ) as int)" //? 24*60*60*1000=86400000 //?respect timezone
     )
-    fun getDays(): Flow<List<DayRange>>
+    fun getDays(offsetMS: Int): Flow<List<DayRange>>
 
 
     @Query("select count(*) from logs")
@@ -61,41 +68,64 @@ interface SpeedRecordsDAO {
     )
     fun getNearestPrior(time: Long): Long?
 
+    /** Get the first [limit] records between [from] and [to] times */
     @Query(
         "select * from logs" +
-                " where time between :from and :to"
-    )
-    fun getBetween(from: Long, to: Long): Flow<List<SpeedRecord>>
-
-    @Query(
-        "select * from logs " +
                 " where time between :from and :to" +
-                " and up>:up" +
-                " and down>:down"
+                " limit :limit"
     )
-    fun getBetweenFasterThan(
-        from: Long, to: Long,
-        up: Float = 0f, down: Float = 0f
-    ): List<SpeedRecord>
+    fun getBetween(from: Long, to: Long, limit: Int = Int.MAX_VALUE): Flow<List<SpeedRecord>>
 
+    //    /** Get the last [limit] records between [from] and [to] times */
+    //    @Query(
+    //        "select * from" +
+    //                '(' +
+    //                " select * from logs" +
+    //                " where time between :from and :to" +
+    //                " order by time desc" +
+    //                " limit :limit" +
+    //                ')' +
+    //                " order by time asc"
+    //    )
+    //    fun getBetweenLast(from: Long, to: Long, limit: Int = Int.MAX_VALUE): Flow<List<SpeedRecord>>
+
+    /** Get the last [limit] records between [from] and [to] times */
     @Query(
         "select * from logs" +
-                " where time" +
-                " between :from and :to" +
-                " and up<:up" +
-                " and down<:down"
+                " where time between :from and :to" +
+                " order by time desc" +
+                " limit :limit"
     )
-    fun getBetweenSlowerThan(
-        from: Long, to: Long,
-        up: Float = Float.MAX_VALUE, down: Float = Float.MAX_VALUE
-    ): List<SpeedRecord>
+    fun getBetweenLastDescending(from: Long, to: Long, limit: Int = Int.MAX_VALUE): Flow<List<SpeedRecord>>
 
-    @Delete
-    fun delete(vararg record: SpeedRecord)
+    //? Will use later with filters ui
+    //    @Query(
+    //        "select * from logs " +
+    //                " where time between :from and :to" +
+    //                " and up>:up" +
+    //                " and down>:down" +
+    //                " limit :limit"
+    //    )
+    //    fun getBetweenFasterThan(
+    //        from: Long, to: Long,
+    //        up: Float = 0f, down: Float = 0f,
+    //        limit: Int? = null
+    //    ): List<SpeedRecord>
+    //
+    //    @Query(
+    //        "select * from logs" +
+    //                " where time" +
+    //                " between :from and :to" +
+    //                " and up<:up" +
+    //                " and down<:down" +
+    //                " limit :limit"
+    //    )
+    //    fun getBetweenSlowerThan(
+    //        from: Long, to: Long,
+    //        up: Float = Float.MAX_VALUE, down: Float = Float.MAX_VALUE,
+    //        limit: Int? = null
+    //    ): List<SpeedRecord>
 
-    @Query("delete from logs where time IN(:times)")
-    fun delete(vararg times: Long)
-
-    @Query("delete from logs where time<:time")
-    fun deleteOlderThan(time: Long)
+    //    @Update
+    //    fun update(vararg record: SpeedRecord)
 }

@@ -34,7 +34,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.galacticai.networkpulse.R
-import com.galacticai.networkpulse.common.await
 import com.galacticai.networkpulse.common.models.bit_value.BitUnitBase
 import com.galacticai.networkpulse.common.models.bit_value.BitValue
 import com.galacticai.networkpulse.common.openURL
@@ -43,10 +42,8 @@ import com.galacticai.networkpulse.common.ui.CustomDropdownMenu
 import com.galacticai.networkpulse.models.DownloadSize
 import com.galacticai.networkpulse.models.settings.Setting
 import com.galacticai.networkpulse.models.settings.Setting.ValueUnitBase.JsonableBitUnitBase.Companion.jsonable
-import com.galacticai.networkpulse.ui.MainActivity
-import com.galacticai.networkpulse.ui.PrepareActivity
-import com.galacticai.networkpulse.ui.util.Consistent
-import com.galacticai.networkpulse.ui.util.Consistent.screenHPadding
+import com.galacticai.networkpulse.ui.activities.MainActivity
+import com.galacticai.networkpulse.ui.activities.PrepareActivity
 import com.galacticai.networkpulse.ui.common.TopBar
 import com.galacticai.networkpulse.ui.dialogs.reloadAppDialog
 import com.galacticai.networkpulse.ui.dialogs.resetDialog
@@ -54,10 +51,18 @@ import com.galacticai.networkpulse.ui.settings.SettingsGroup
 import com.galacticai.networkpulse.ui.settings.SettingsItem
 import com.galacticai.networkpulse.ui.settings.SettingsSlider
 import com.galacticai.networkpulse.ui.settings.SettingsSwitch
+import com.galacticai.networkpulse.util.Consistent
+import com.galacticai.networkpulse.util.Consistent.screenHPadding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 
 
 const val SETTINGS = "settings"
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = SETTINGS)
+
+private fun io(block: suspend CoroutineScope.() -> Unit) =
+    runBlocking(Dispatchers.IO, block)
 
 @Composable
 fun SettingsScreen() {
@@ -68,7 +73,7 @@ fun SettingsScreen() {
         TopBar(title, listOf {
             IconButton(onClick = {
                 resetDialog(ctx, title) { _, _ ->
-                    await { Setting.restoreAll(ctx) }
+                    io { Setting.restoreAll(ctx) }
                     restartApp(ctx as MainActivity, PrepareActivity::class.java)
                 }
             }) {
@@ -166,7 +171,7 @@ private fun itemDownloadSize(context: Context): SettingsItem {
         subtitle = context.getString(R.string.download_size_setting_description),
         onResetClick = {
             resetDialog(context, title) { _, _ ->
-                await { Setting.DownloadSize.restoreDefault(context) }
+                io { Setting.DownloadSize.restoreDefault(context) }
                 restartApp(context as MainActivity, PrepareActivity::class.java)
             }
         },
@@ -186,7 +191,7 @@ private fun itemDownloadSize(context: Context): SettingsItem {
             onSelected = {
                 resetDialog(context, title) { _, _ ->
                     selected = it
-                    await { Setting.DownloadSize.setObject(context, it) }
+                    io { Setting.DownloadSize.setObject(context, it) }
                     restartApp(context as MainActivity, PrepareActivity::class.java)
                 }
             }
@@ -232,7 +237,7 @@ private fun itemValueUnit(context: Context): SettingsItem {
         subtitle = context.getString(R.string.value_unit_setting_description),
         onResetClick = {
             resetDialog(context, title) { _, _ ->
-                await { Setting.ValueUnitBase.restoreDefault(context) }
+                io { Setting.ValueUnitBase.restoreDefault(context) }
                 restartApp(context as MainActivity, PrepareActivity::class.java)
             }
         },
@@ -252,7 +257,7 @@ private fun itemValueUnit(context: Context): SettingsItem {
             onSelected = {
                 resetDialog(context, title) { _, _ ->
                     selected = it
-                    await { Setting.ValueUnitBase.setObject(context, it) }
+                    io { Setting.ValueUnitBase.setObject(context, it) }
                     restartApp(context as MainActivity, PrepareActivity::class.java)
                 }
             }

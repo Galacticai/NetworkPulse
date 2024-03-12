@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -125,7 +126,7 @@ fun ExpandableGroup(
                             itemPadding: PaddingValues
                         ) {
                             if (withDivider && i > 0 && i < items.size) {
-                                Divider(
+                                HorizontalDivider(
                                     modifier = Modifier.padding(horizontal = padding),
                                     color = containerColor
                                 )

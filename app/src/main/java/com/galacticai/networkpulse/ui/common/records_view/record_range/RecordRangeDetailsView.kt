@@ -28,16 +28,17 @@ import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarData
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.sorted
 import com.galacticai.networkpulse.models.records_summary.RecordsSummary
-import com.galacticai.networkpulse.ui.util.Consistent
-import com.galacticai.networkpulse.ui.util.durationSuffixes
-import com.galacticai.networkpulse.ui.util.localized
-import com.galacticai.networkpulse.ui.util.localizedDot
 import com.galacticai.networkpulse.ui.common.records_view.RecordRangeChart
+import com.galacticai.networkpulse.util.Consistent
+import com.galacticai.networkpulse.util.durationSuffixes
+import com.galacticai.networkpulse.util.localized
+import com.galacticai.networkpulse.util.localizedDot
+import java.util.SortedSet
 import kotlin.time.Duration
 
 @Composable
 fun RecordRangeDetailsView(
-    records: List<SpeedRecord>,
+    records: SortedSet<SpeedRecord>,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(horizontal = 10.dp),
     recordsSimplified: ColorChartData? = null,
@@ -54,7 +55,7 @@ fun RecordRangeDetailsView(
     fun formatSpeed(speed: BitValue) =
         "${speed.value.localizedDot(2)}\n${speed.unit.name.short}/${durationSuffixes.seconds}"
 
-    val summary = RecordsSummary.ofRecords(records.sorted())
+    val summary = RecordsSummary.ofRecords(records)
 
     Column(
         Modifier
@@ -133,7 +134,7 @@ fun ModalRecordRange(
         dragHandle = {},
     ) {
         RecordRangeDetailsView(
-            records,
+            records = records.sorted(),
             contentPadding = PaddingValues(horizontal = 10.dp),
             recordsSimplified = recordsSimplified,
             onRecordDeleted = onRecordDeleted,

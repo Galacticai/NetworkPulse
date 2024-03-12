@@ -6,14 +6,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.galacticai.networkpulse.common.fromUTC
 import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarData
-import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.sorted
-import com.galacticai.networkpulse.ui.MainActivity
+import com.galacticai.networkpulse.ui.activities.MainActivity
 import com.galacticai.networkpulse.ui.common.AppTitle
 import com.galacticai.networkpulse.ui.common.NoRecordsMessage
 import com.galacticai.networkpulse.ui.common.records_view.record_range.RecordRangeDetailsView
@@ -25,13 +23,11 @@ import java.util.Locale
 @Composable
 fun OverviewScreen() {
     val activity = LocalContext.current as MainActivity
-    val recentRecords by activity.viewModel.repo.recentRecordsLive.observeAsState(emptyList())
+    val recentRecords by activity.repo.rememberRecentRecords()
 
-    Column(
-        modifier = Modifier.padding(
-            horizontal = 10.dp
-        )
-    ) {
+    val h_mm_ss_a = SimpleDateFormat("h:mm:ss a", Locale.getDefault())
+
+    Column(modifier = Modifier.padding(horizontal = 10.dp)) {
         AppTitle(
             modifier = Modifier
                 .fillMaxWidth()
@@ -41,7 +37,7 @@ fun OverviewScreen() {
                 )
         )
         AnimatedContent(
-            targetState = recentRecords.isNullOrEmpty(),
+            targetState = recentRecords.isEmpty(),
             label = "OverviewScreenAnimation"
         ) { isEmpty ->
             if (isEmpty) {
@@ -51,16 +47,16 @@ fun OverviewScreen() {
 
             RecordRangeDetailsView(
                 records = recentRecords,
-                recordsSimplified = recentRecords.sorted().toColorChartDataPerMinute(),
-                onRecordDeleted = {
-                    val list = activity.viewModel.recentRecords.value
-                        .orEmpty().toMutableList()
-                    list.remove(it)
-                    activity.viewModel.recentRecords.value = list
-                },
+                recordsSimplified = recentRecords.toColorChartDataPerMinute(),
+                //? LiveData, no need for manual updates
+                // onRecordDeleted = {
+                // val list = activity.viewModel.recentRecords
+                //     .value!!.toMutableList() //? must not be null in this stage
+                // list.remove(it)
+                // activity.viewModel.recentRecords.value = list
+                // },
             ) {
-                val timestamp = SimpleDateFormat("h:mm:ss a", Locale.getDefault())
-                    .format(it.time.fromUTC())
+                val timestamp = h_mm_ss_a.format(it.time.fromUTC())
                 val value = it.down ?: 0f
                 BarData(timestamp, value)
             }

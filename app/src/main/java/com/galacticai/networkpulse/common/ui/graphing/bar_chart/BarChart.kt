@@ -20,9 +20,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.KeyboardArrowLeft
-import androidx.compose.material.icons.rounded.KeyboardArrowRight
-import androidx.compose.material3.Divider
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -57,7 +56,7 @@ fun <T> BarChart(
     startAsScrolledToEnd: Boolean = false,
     style: BarChartStyle<T> = BarChartStyle(),
     parser: (T) -> BarData,
-    data: List<T>,
+    data: Collection<T>,
     onBarClick: ((data: T, parsed: BarData, i: Int) -> Unit)? = null,
 ) {
     var max by remember { mutableFloatStateOf(Float.MIN_VALUE) }
@@ -72,11 +71,6 @@ fun <T> BarChart(
                 return@map barData
             }
         }
-    }
-    //? Not sure i need this after adding `remember(data)` but too afraid to remove
-    LaunchedEffect(data) {
-        @Suppress("UNUSED_EXPRESSION")
-        dataParsed //? Trigger derivedStateOf
     }
     if (max < min) return //? Brief moment before max and min are calculated
 
@@ -101,7 +95,7 @@ fun <T> BarChart(
                     .fillMaxWidth()
             ) {
                 @Composable
-                fun line() = Divider(
+                fun line() = HorizontalDivider(
                     modifier = Modifier.padding(0.dp),
                     thickness = style.horizontalScale.thickness,
                     color = style.horizontalScale.color
@@ -176,7 +170,6 @@ fun <T> BarChart(
             modifier = modifier,
             visible = canScroll
         ) {
-            val direction = LocalLayoutDirection.current
             IconButton(
                 modifier = Modifier
                     .shadow(
@@ -192,9 +185,7 @@ fun <T> BarChart(
                 ),
             ) {
                 Icon(
-                    imageVector = if (direction == LayoutDirection.Ltr)
-                        Icons.Rounded.KeyboardArrowRight
-                    else Icons.Rounded.KeyboardArrowLeft,
+                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
                     contentDescription = null,
                     modifier = Modifier.padding(horizontal = 10.dp),
                 )
@@ -247,8 +238,7 @@ fun <T> BarChart(
                                 color = style.xValue.bgColor(dataItem, parsedItem, range()),
                             ) {
                                 Text(
-                                    modifier = Modifier
-                                        .padding(style.xValue.padding),
+                                    modifier = Modifier.padding(style.xValue.padding),
                                     text = style.xValue.format(dataItem, parsedItem, range()),
                                     color = style.xValue.color(dataItem, parsedItem, range()),
                                     fontSize = style.xValue.fontSize,

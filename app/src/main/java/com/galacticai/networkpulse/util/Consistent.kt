@@ -1,4 +1,4 @@
-package com.galacticai.networkpulse.ui.util
+package com.galacticai.networkpulse.util
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape

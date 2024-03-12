@@ -68,9 +68,9 @@ import com.galacticai.networkpulse.ui.common.records_view.record_range.ColorChar
 import com.galacticai.networkpulse.ui.common.records_view.record_range.Filler
 import com.galacticai.networkpulse.ui.common.records_view.record_range.RecordRangeType
 import com.galacticai.networkpulse.ui.common.records_view.record_range.RecordRangeView
-import com.galacticai.networkpulse.ui.util.Consistent
-import com.galacticai.networkpulse.ui.util.durationSuffixes
-import com.galacticai.networkpulse.ui.util.localized
+import com.galacticai.networkpulse.util.Consistent
+import com.galacticai.networkpulse.util.durationSuffixes
+import com.galacticai.networkpulse.util.localized
 import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
 import java.time.ZoneId

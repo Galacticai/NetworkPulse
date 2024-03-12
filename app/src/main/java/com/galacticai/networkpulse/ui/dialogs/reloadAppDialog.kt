@@ -4,8 +4,8 @@ import android.content.Context
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.restartApp
 import com.galacticai.networkpulse.services.PulseService
-import com.galacticai.networkpulse.ui.MainActivity
-import com.galacticai.networkpulse.ui.PrepareActivity
+import com.galacticai.networkpulse.ui.activities.MainActivity
+import com.galacticai.networkpulse.ui.activities.PrepareActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 fun reloadAppDialog(context: Context) {
@@ -15,7 +15,7 @@ fun reloadAppDialog(context: Context) {
         .setIcon(android.R.drawable.ic_dialog_alert)
         .setNegativeButton(android.R.string.no) { dialog, _ -> dialog.dismiss() }
         .setPositiveButton(android.R.string.yes) { _, _ ->
-            PulseService.stopIfRunning(context)
+            PulseService.stop(context)
             restartApp(context as MainActivity, PrepareActivity::class.java)
         }
         .show()

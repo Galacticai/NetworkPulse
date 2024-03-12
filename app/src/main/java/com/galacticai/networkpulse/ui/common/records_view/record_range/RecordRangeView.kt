@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarData
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.sorted
-import com.galacticai.networkpulse.ui.util.Consistent
+import com.galacticai.networkpulse.util.Consistent
 import java.text.SimpleDateFormat
 import java.time.ZoneId
 import java.util.Locale

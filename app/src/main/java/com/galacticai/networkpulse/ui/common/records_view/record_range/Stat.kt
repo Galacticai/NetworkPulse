@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,7 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
-import com.galacticai.networkpulse.ui.util.Consistent
+import com.galacticai.networkpulse.util.Consistent
 
 @Composable
 fun RowScope.Stat(title: String?, value: Any, color: Color = Color.Unspecified) {
@@ -46,7 +46,7 @@ fun RowScope.Stat(title: String?, value: Any, color: Color = Color.Unspecified) 
                     fontSize = 12.sp,
                     color = secondary,
                 )
-                Divider(
+                HorizontalDivider(
                     color = secondary.copy(.25f),
                     thickness = 1.dp,
                     modifier = Modifier

@@ -1,4 +1,4 @@
-package com.galacticai.networkpulse.ui.util
+package com.galacticai.networkpulse.util
 
 import android.content.Context
 import com.galacticai.networkpulse.R

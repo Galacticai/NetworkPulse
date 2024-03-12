@@ -18,7 +18,7 @@ import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.ui.CubicChart
 import com.galacticai.networkpulse.common.ui.CubicChartData
 import com.galacticai.networkpulse.models.settings.Setting
-import com.galacticai.networkpulse.ui.util.Consistent
+import com.galacticai.networkpulse.util.Consistent
 
 @Composable
 fun HourGraph(data: CubicChartData) {

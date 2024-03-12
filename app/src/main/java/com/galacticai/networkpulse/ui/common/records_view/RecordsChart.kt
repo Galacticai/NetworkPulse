@@ -32,14 +32,15 @@ import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarValueStyle
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.isSuccess
 import com.galacticai.networkpulse.models.settings.Setting
-import com.galacticai.networkpulse.ui.util.localized
+import com.galacticai.networkpulse.util.localized
+import java.util.SortedSet
 import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecordRangeChart(
+    records: SortedSet<SpeedRecord>,
     modifier: Modifier = Modifier,
-    records: List<SpeedRecord>,
     onRecordDeleted: ((SpeedRecord) -> Unit)? = null,
     parser: ((SpeedRecord) -> BarData)? = null
 ) {
@@ -56,19 +57,19 @@ fun RecordRangeChart(
         graphCellSpacing = Setting.GraphCellSpacing.get(context)
     }
 
-    val detailedState = rememberModalBottomSheetState()
-    var detailedRecord by remember { mutableStateOf<SpeedRecord?>(null) }
-    val showDetailedRecord by remember(detailedRecord) { derivedStateOf { detailedRecord != null } }
+    val selectedState = rememberModalBottomSheetState()
+    var selectedRecord by remember { mutableStateOf<SpeedRecord?>(null) }
+    val showDetailedRecord by remember(selectedRecord) { derivedStateOf { selectedRecord != null } }
     LaunchedEffect(showDetailedRecord) {
-        if (showDetailedRecord) detailedState.show()
-        else detailedState.hide()
+        if (showDetailedRecord) selectedState.show()
+        else selectedState.hide()
     }
     if (showDetailedRecord) {
         ModalRecordDetails(
-            state = detailedState,
-            record = detailedRecord!!,
-            onRecordDeleted = { onRecordDeleted?.invoke(detailedRecord!!) }
-        ) { detailedRecord = null }
+            state = selectedState,
+            record = selectedRecord!!,
+            onRecordDeleted = { onRecordDeleted?.invoke(selectedRecord!!) }
+        ) { selectedRecord = null }
     }
 
     BarChart(
@@ -131,7 +132,7 @@ fun RecordRangeChart(
             val value = it.down ?: 0f
             BarData(label, value)
         },
-        onBarClick = { record, _, _ -> detailedRecord = record },
+        onBarClick = { record, _, _ -> selectedRecord = record },
         data = records
     )
 }

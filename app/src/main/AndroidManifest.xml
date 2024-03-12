@@ -34,7 +34,7 @@
         tools:targetApi="34">
 
         <activity
-            android:name=".ui.PrepareActivity"
+            android:name=".ui.activities.PrepareActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -43,7 +43,7 @@
         </activity>
 
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".ui.activities.MainActivity"
             android:exported="true" />
 
         <service android:name=".services.PulseService" />

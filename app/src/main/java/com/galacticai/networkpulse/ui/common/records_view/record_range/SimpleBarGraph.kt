@@ -27,7 +27,7 @@ import com.galacticai.networkpulse.common.getMinute
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.sorted
-import com.galacticai.networkpulse.ui.util.Consistent
+import com.galacticai.networkpulse.util.Consistent
 import java.time.ZoneId
 import java.util.SortedSet
 
