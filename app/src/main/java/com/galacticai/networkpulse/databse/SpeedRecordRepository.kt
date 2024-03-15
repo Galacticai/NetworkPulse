@@ -15,10 +15,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.asLiveData
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.sorted
-import com.galacticai.networkpulse.models.DayRange
 import com.galacticai.networkpulse.models.settings.Setting
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.launch
 import java.util.SortedSet
 
@@ -65,28 +63,6 @@ class SpeedRecordRepository(
             }
         }
         return remember(records) { derivedStateOf { records.sorted() } }
-    }
-
-    @Composable
-    fun rememberDaysAndCount(offsetMS: Int): State<Map<Long, Int>> {
-        var days by rememberSaveable { mutableStateOf<List<DayRange>>(emptyList()) }
-        LaunchedEffect(Unit) {
-            viewModelScope.launch {
-                dao.getDays(offsetMS).collect { days = it.reversed() }
-            }
-        }
-        val daysAndCount = rememberSaveable { mutableStateOf<Map<Long, Int>>(emptyMap()) }
-        LaunchedEffect(days) {
-            viewModelScope.launch {
-                daysAndCount.value = days.associate {
-                    val count = dao.countBetween(it.first, it.last)
-                        .lastOrNull() ?: 0
-                    return@associate it.first to count
-                }
-            }
-        }
-
-        return daysAndCount
     }
 
     //private var _recentRecordsTime = mutableIntStateOf(Setting.RecentRecordsTime.defaultValue)

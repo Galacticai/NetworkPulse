@@ -120,4 +120,6 @@
     <string name="continue_">Continue</string>
     <string name="persistent_notification">Persistent notification</string>
     <string name="pulse_service">Pulse service</string>
+    <string name="no_days_found">No days found</string>
+    <string name="days">days</string>
 </resources>

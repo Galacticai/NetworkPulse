@@ -120,4 +120,6 @@
     <string name="continue_">متابعة</string>
     <string name="persistent_notification">الإشعار المستمر</string>
     <string name="pulse_service">خدمة النبض</string>
+    <string name="no_days_found">لا يوجد أيام</string>
+    <string name="days">أيام</string>
 </resources>

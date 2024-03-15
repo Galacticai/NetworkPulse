@@ -92,15 +92,11 @@ fun SimpleColorChart(
 fun ColorChartOverlayText(
     text: String,
     modifier: Modifier = Modifier,
-    elevation: Dp = 0.dp
 ) {
-    val secondaryContainer = colorResource(R.color.secondaryContainer)
     Surface(
         modifier = modifier,
-        color = if (elevation > 0.dp) secondaryContainer
-        else secondaryContainer.copy(.8f),
+        color = colorResource(R.color.secondaryContainer).copy(.8f),
         shape = Consistent.shape,
-        shadowElevation = elevation
     ) {
         Text(
             text, Modifier.padding(horizontal = 10.dp, vertical = 2.dp),

@@ -1,14 +1,11 @@
 package com.galacticai.networkpulse.ui.main
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,30 +14,21 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
-import androidx.compose.material.icons.rounded.KeyboardArrowUp
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -77,7 +65,7 @@ import java.time.ZoneId
 import java.util.Calendar
 import java.util.Locale
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun RecordRangeList(
     modifier: Modifier = Modifier,
@@ -95,6 +83,20 @@ fun RecordRangeList(
     val n59 = 59.localized()
     val haFormatter = SimpleDateFormat("h a", locale)
 
+    val legendPadding = 7.dp
+    var legendHeight by rememberSaveable { mutableIntStateOf(0) }
+
+    val groupedByDay by remember(records) {
+        derivedStateOf { records.groupBy { r -> r.time.atStartOfDayMS(zoneId) } }
+    }
+
+    val max by remember(records) { derivedStateOf { records.downMax } }
+    val maxHourAverage by remember(groupedByDay) {
+        //TODO: try to get the same value from summary instead of doing here
+        derivedStateOf { groupedByDay.values.maxOf { it.average().down ?: 0f } }
+    }
+
+
     Surface(
         color = colorResource(R.color.surface),
         shape = Consistent.shape,
@@ -103,52 +105,39 @@ fun RecordRangeList(
             .graphicsLayer(clip = true)
             .then(modifier)
     ) {
-        var legendHeight by rememberSaveable { mutableIntStateOf(0) }
-        val maxValue by remember(records) { derivedStateOf { records.downMax } }
-
-        val groupedByDay by remember(records) {
-            derivedStateOf {
-                records.groupBy { r -> r.time.atStartOfDayMS(zoneId) }
-            }
-        }
-
-
         Box(Modifier.fillMaxSize()) {
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxWidth()
             ) {
-
                 var addSpace = false
                 groupedByDay.forEach { (day, dayRecords) ->
                     if (addSpace) item { Spacer(Modifier.height(20.dp)) }
 
-                    val groupedByHour = dayRecords.groupBy { r ->
-                        r.time.atStartOfHourMS(zoneId)
-                    }
+                    val groupedByHour = dayRecords.groupBy { r -> r.time.atStartOfHourMS(zoneId) }
 
                     stickyHeader { DayHeader(day, groupedByHour, records.size, locale) }
 
                     groupedByHour.forEach { (hour, hourRecords) ->
+                        val ha = haFormatter.format(hour)
+                        val haParts = ha.split(' ')
+                        val h = haParts[0]
+                        val a = haParts[1]
+                        val xAxisStart = "$h:$n00 $a"
+                        val xAxisEnd = "$h:$n59 $a"
                         item {
-                            val ha = haFormatter.format(hour)
-                            val haParts = ha.split(' ')
-                            val h = haParts[0]
-                            val a = haParts[1]
-                            val xAxisStart = "$h:$n00 $a"
-                            val xAxisEnd = "$h:$n59 $a"
                             RecordRangeView(
                                 modifier = Modifier.padding(horizontal = 2.dp),
                                 records = hourRecords.reversed(),
                                 onRecordDeleted = onRecordDeleted,
                                 rangeType = RecordRangeType.Hour,
-                                colorMaxValue = maxValue,
+                                colorMaxValue = maxHourAverage,
                                 colorChartOverlay = {
                                     ColorChartOverlayText(
                                         xAxisStart,
                                         Modifier
                                             .align(Alignment.CenterStart)
-                                            .padding(start = 10.dp)
+                                            .padding(start = 8.dp)
                                     )
                                     ColorChartOverlayText(
                                         hourRecords.size.localized(),
@@ -158,7 +147,7 @@ fun RecordRangeList(
                                         xAxisEnd,
                                         Modifier
                                             .align(Alignment.CenterEnd)
-                                            .padding(end = 10.dp)
+                                            .padding(end = 8.dp)
                                     )
                                 },
                             )
@@ -168,30 +157,35 @@ fun RecordRangeList(
                     item {
                         Spacer(
                             Modifier.height(
-                                (legendHeight / context.resources.displayMetrics.density).dp
+                                (legendHeight / context.resources.displayMetrics.density).dp +
+                                        (legendPadding * 2)
                             )
                         )
                     }
+
                     if (!addSpace) addSpace = true
                 }
             }
             AnimatedVisibility(
-                modifier = Modifier.align(Alignment.BottomCenter),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .pointerInteropFilter { false },
                 visible = !listState.canScrollBackward || !listState.canScrollForward,
                 enter = slideIn { IntOffset(0, it.height) } + fadeIn(),
                 exit = slideOut { IntOffset(0, it.height) } + fadeOut(),
             ) {
                 LegendView(
-                    maxValue,
+                    max,
                     Modifier
                         .align(Alignment.BottomCenter)
-                        .onGloballyPositioned { legendHeight = it.size.height })
+                        .onGloballyPositioned { legendHeight = it.size.height }
+                        .padding(legendPadding)
+                )
             }
         }
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun LegendView(maxValue: Float, modifier: Modifier = Modifier) {
     val max = BitValue(
@@ -204,24 +198,9 @@ private fun LegendView(maxValue: Float, modifier: Modifier = Modifier) {
     val warning = colorResource(R.color.warning)
     val error = colorResource(R.color.error)
 
-    @Composable
-    fun dot(color: Color) = Canvas(
-        Modifier
-            .size(15.dp)
-            .padding(3.dp)
-    ) {
-        drawCircle(
-            color = color,
-            center = Offset(x = 7.5f, y = 7.5f),
-            radius = 7.5f
-        )
-    }
-
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(7.dp)
-            .pointerInteropFilter { false }
             .then(modifier),
         color = colorResource(R.color.background),
         shape = Consistent.shape,
@@ -233,7 +212,6 @@ private fun LegendView(maxValue: Float, modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .padding(horizontal = 10.dp, vertical = 5.dp),
         ) {
-            val elevation = 5.dp
             Box(
                 Modifier
                     .fillMaxWidth()
@@ -242,17 +220,14 @@ private fun LegendView(maxValue: Float, modifier: Modifier = Modifier) {
                 ColorChartOverlayText(
                     stringResource(R.string.from),
                     Modifier.align(Alignment.CenterStart),
-                    elevation,
                 )
                 ColorChartOverlayText(
                     stringResource(R.string.records_count),
                     Modifier.align(Alignment.Center),
-                    elevation,
                 )
                 ColorChartOverlayText(
                     stringResource(R.string.to),
                     Modifier.align(Alignment.CenterEnd),
-                    elevation,
                 )
             }
             Spacer(Modifier.height(5.dp))
@@ -265,9 +240,8 @@ private fun LegendView(maxValue: Float, modifier: Modifier = Modifier) {
                     .padding(horizontal = 10.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                dot(error)
                 Text(
-                    stringResource(R.string.failAdjective),
+                    "● ${stringResource(R.string.failAdjective)}",
                     color = error,
                     fontWeight = weight,
                     fontSize = size,
@@ -275,9 +249,8 @@ private fun LegendView(maxValue: Float, modifier: Modifier = Modifier) {
                 )
                 Filler()
 
-                dot(warning)
                 Text(
-                    stringResource(R.string.missingAdjective),
+                    "● ${stringResource(R.string.missingAdjective)}",
                     color = warning,
                     fontWeight = weight,
                     fontSize = size,
@@ -285,9 +258,8 @@ private fun LegendView(maxValue: Float, modifier: Modifier = Modifier) {
                 )
                 Filler()
 
-                dot(primary)
                 Text(
-                    "${stringResource(R.string.maximum)}: ",
+                    "● ${stringResource(R.string.maximum)}: ",
                     color = primary,
                     fontWeight = weight,
                     fontSize = size,
@@ -311,115 +283,64 @@ private fun DayHeader(
     totalCount: Int,
     locale: Locale
 ) {
-    var showSummary by remember { mutableStateOf(true) }
-
-    val symbols = DateFormatSymbols.getInstance(locale)
-    val amPmStrings = symbols.amPmStrings
-    val am = amPmStrings[Calendar.AM]
-    val pm = amPmStrings[Calendar.PM]
-
+    val ampm = DateFormatSymbols.getInstance(locale).amPmStrings
     val n0 = 0.localized()
     val n00 = "$n0$n0"
     val n11 = 11.localized()
     val n12 = 12.localized()
     val n59 = 59.localized()
-
-    val xAxisStart = "$n12:$n00 $am"
-    val xAxisEnd = "$n11:$n59 $pm"
+    val xAxisStart = "$n12:$n00 ${ampm[Calendar.AM]}"
+    val xAxisEnd = "$n11:$n59 ${ampm[Calendar.PM]}"
 
     Surface(
         color = colorResource(R.color.secondaryContainer),
-        border = BorderStroke(1.dp, colorResource(R.color.onSecondaryContainer).copy(.5f)),
+        border = BorderStroke(2.dp, colorResource(R.color.onSecondaryContainer).copy(.25f)),
         contentColor = colorResource(R.color.onSecondaryContainer),
         shape = Consistent.shape,
-        onClick = { showSummary = !showSummary },
         modifier = Modifier
             .fillMaxWidth()
             .padding(2.dp)
-            .heightIn(min = 40.dp)
+        //.heightIn(min = 40.dp)
     ) {
-        AnimatedContent(
-            targetState = showSummary,
-            label = "DayHeaderAnimation",
-            transitionSpec = { fadeIn() togetherWith fadeOut() }
-        ) {
-            Column(modifier = Modifier.padding(10.dp)) {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = SimpleDateFormat(
-                            "EEEE dd/MM/yyyy", locale
-                        ).format(dayMS),
-                        modifier = Modifier.weight(1f),
-                        fontSize = 12.sp,
-                        letterSpacing = .2f.sp,
-                        textAlign = TextAlign.Center,
-                        fontWeight = if (it) FontWeight.W100 else FontWeight.Bold,
+        Column(modifier = Modifier.padding(10.dp)) {
+            Text(
+                text = SimpleDateFormat("EEEE dd/MM/yyyy", locale)
+                    .format(dayMS),
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold,
+            )
+
+            val hourlyAverage = groupedByHour.values.map { it.average() }
+            val parserLabelFormat = SimpleDateFormat("h a", locale)
+
+            Spacer(modifier = Modifier.height(10.dp))
+            RecordRangeView(
+                records = hourlyAverage.reversed(),
+                rangeType = RecordRangeType.Day,
+                colorChartOverlay = {
+                    ColorChartOverlayText(
+                        xAxisStart,
+                        Modifier
+                            .align(Alignment.CenterStart)
+                            .padding(start = 8.dp)
                     )
-                    Icon(
-                        modifier = Modifier
-                            .size(18.dp)
-                            .padding(horizontal = 10.dp),
-                        imageVector = if (it) Icons.Rounded.KeyboardArrowUp
-                        else Icons.Rounded.KeyboardArrowDown,
-                        contentDescription = null,
+                    ColorChartOverlayText(
+                        totalCount.localized(),
+                        Modifier.align(Alignment.Center)
                     )
-                }
-                if (it) {
-                    val hourlyAverage = groupedByHour.map { (_, hourRecords) ->
-                        hourRecords.average()
-                    }
-                    Spacer(modifier = Modifier.height(10.dp))
-                    RecordRangeView(
-                        records = hourlyAverage.reversed(),
-                        rangeType = RecordRangeType.Day,
-                        colorChartOverlay = {
-                            ColorChartOverlayText(
-                                xAxisStart,
-                                Modifier
-                                    .align(Alignment.CenterStart)
-                                    .padding(start = 10.dp)
-                            )
-                            ColorChartOverlayText(
-                                totalCount.localized(), //"${totalCount.localized()} ${stringResource(R.string.records)}",
-                                Modifier.align(Alignment.Center)
-                            )
-                            ColorChartOverlayText(
-                                xAxisEnd,
-                                Modifier
-                                    .align(Alignment.CenterEnd)
-                                    .padding(end = 10.dp)
-                            )
-                        },
-                        parser = { record ->
-                            val label = SimpleDateFormat("h a", locale)
-                                .format(record.time.fromUTC())
-                            BarData(label, record.down ?: 0f)
-                        },
+                    ColorChartOverlayText(
+                        xAxisEnd,
+                        Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(end = 8.dp)
                     )
-                }
-            }
+                },
+                parser = { record ->
+                    val label = parserLabelFormat.format(record.time.fromUTC())
+                    BarData(label, record.down ?: 0f)
+                },
+            )
         }
-    }
-}
-
-@Composable
-private fun HourHeader(hourMS: Long, records: List<SpeedRecord>, locale: Locale) {
-    val hourText = SimpleDateFormat("h a", locale)
-        .format(hourMS)
-
-    Row(
-        modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = hourText,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        Text(
-            "${records.size.localized()} ${stringResource(R.string.records)}",
-            fontSize = 12.sp,
-        )
     }
 }

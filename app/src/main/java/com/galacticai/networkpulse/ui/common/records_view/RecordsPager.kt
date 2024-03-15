@@ -1,6 +1,5 @@
 package com.galacticai.networkpulse.ui.common.records_view
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.ElevatedButton
@@ -25,7 +23,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -39,15 +36,16 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
+import com.galacticai.networkpulse.models.DayRange
 import com.galacticai.networkpulse.ui.activities.MainActivity
 import com.galacticai.networkpulse.ui.common.NoRecordsMessage
 import com.galacticai.networkpulse.ui.main.RecordRangeList
 import com.galacticai.networkpulse.util.Consistent
+import com.galacticai.networkpulse.util.Consistent.screenHPadding
 import com.galacticai.networkpulse.util.localized
 import com.guru.fontawesomecomposelib.FaIcon
 import com.guru.fontawesomecomposelib.FaIconType
@@ -63,7 +61,7 @@ import java.util.TimeZone
 fun RecordsPager(modifier: Modifier = Modifier) {
     val activity = LocalContext.current as MainActivity
     val timezoneOffset = TimeZone.getDefault().rawOffset
-    
+
     val days by activity.repo
         .daysLive(timezoneOffset)
         .observeAsState(emptyList())
@@ -74,7 +72,7 @@ fun RecordsPager(modifier: Modifier = Modifier) {
     }
 
     val pageCount by remember(days) { derivedStateOf { days.size } }
-    val pagerState = rememberPagerState(pageCount - 1, pageCount = { pageCount })
+    val pagerState = rememberPagerState(days.lastIndex, pageCount = { pageCount })
 
     fun scrollTo(page: Int) {
         if (page < 0 || page >= pagerState.pageCount) return
@@ -125,18 +123,10 @@ fun RecordsPager(modifier: Modifier = Modifier) {
             var pickingDay by remember { mutableStateOf(false) }
             val sheetState = rememberModalBottomSheetState()
             if (pickingDay) {
-                val currentPageReversed by remember(pagerState) {
-                    derivedStateOf { pagerState.pageCount - pagerState.currentPage - 1 }
-                }
-                val currentDay by remember(days) {
-                    derivedStateOf { days[currentPageReversed].first }
-                }
-                val daysAndCount by activity.repo.rememberDaysAndCount(timezoneOffset)
-
                 DayPicker(
                     sheetState = sheetState,
-                    currentDay = currentDay,
-                    days = daysAndCount,
+                    currentPage = pagerState.currentPage,
+                    days = days,
                     onDismissRequest = { pickingDay = false },
                 ) {
                     scrollTo(it)
@@ -189,6 +179,7 @@ fun RecordsPager(modifier: Modifier = Modifier) {
                 )
                 Text(
                     (pagerState.currentPage + 1).localized(),
+                    color = colorResource(R.color.secondary),
                     fontWeight = FontWeight.W900,
                 )
                 Text(" ${stringResource(R.string.of)} ${pagerState.pageCount.localized()}")
@@ -210,69 +201,94 @@ fun RecordsPager(modifier: Modifier = Modifier) {
 @Composable
 private fun DayPicker(
     sheetState: SheetState,
-    currentDay: Long,
-    days: Map<Long, Int>,
+    currentPage: Int,
+    days: List<DayRange>,
     onDismissRequest: () -> Unit,
     onPicked: (Int) -> Unit
 ) {
-    val listState = rememberLazyListState()
-    LaunchedEffect(Unit) {
-        listState.scrollToItem(days.keys.indexOf(currentDay))
-    }
+    val empty by remember(days) { derivedStateOf { days.isEmpty() } }
     ModalBottomSheet(
         sheetState = sheetState,
         onDismissRequest = onDismissRequest,
         shape = Consistent.shape,
     ) {
-        Text(
+        val pad2 = Consistent.screenHorizontalPadding * 2
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = pad2,
+                    end = pad2,
+                    bottom = (if (empty) 50 else 20).dp
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                modifier = Modifier.weight(1f),
+                text = stringResource(
+                    if (empty) R.string.no_days_found
+                    else R.string.pick_a_day
+                ),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            if (!empty) {
+                Text("${days.size.localized()} ${stringResource(R.string.days)}")
+            }
+        }
+        if (empty) return@ModalBottomSheet
+
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 10.dp),
-            text = stringResource(R.string.pick_a_day),
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-        )
-        val otherTextColor = colorResource(R.color.onBackground).copy(.75f)
-        LazyColumn(
-            modifier = Modifier
-                .padding(horizontal = 10.dp)
-                .heightIn(max = 900.dp),
-            state = listState,
+                .screenHPadding(),
+            color = colorResource(R.color.background),
+            shape = Consistent.shape,
         ) {
-            items(days.size) {
-                val day = days.keys.elementAt(it)
-                val isCurrent = day == currentDay
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = Consistent.shape,
-                    border = if (!isCurrent) null
-                    else BorderStroke(1.dp, colorResource(R.color.primary).copy(alpha = .25f)),
-                    color = colorResource(
-                        if (isCurrent) R.color.primaryContainer
-                        else R.color.background
-                    ),
-                    shadowElevation = 5.dp,
-                    onClick = { onPicked(it) },
-                ) {
-                    Row(modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)) {
-                        val title = SimpleDateFormat("dd/MM/yyyy EEEE", Locale.getDefault())
-                            .format(day)
-                        Text(
-                            modifier = Modifier.weight(1f),
-                            text = title,
-                            fontSize = 16.sp,
-                            color = if (isCurrent) colorResource(R.color.primary) else otherTextColor,
-                            fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal
-                        )
-                        Text(
-                            "${days[day]} ${stringResource(R.string.records)}",
-                            color = if (isCurrent) colorResource(R.color.secondary) else otherTextColor,
-                        )
+            val otherTextColor = colorResource(R.color.onBackground).copy(.75f)
+            LazyColumn(Modifier.heightIn(max = 600.dp)) {
+                for (page in days.size downTo 1) {
+                    val pageIndex = page - 1
+                    val day = days[pageIndex]
+                    val isCurrentPage = currentPage == pageIndex
+
+                    item {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = Consistent.shape,
+                            color = colorResource(
+                                if (isCurrentPage) R.color.primaryContainer
+                                else R.color.background
+                            ),
+                            onClick = { onPicked(pageIndex) },
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = SimpleDateFormat("EEE dd/MM/yyyy", Locale.getDefault())
+                                        .format(day.first),
+                                    color = if (isCurrentPage) colorResource(R.color.primary) else otherTextColor,
+                                    fontWeight = if (isCurrentPage) FontWeight.Bold else FontWeight.Normal
+                                )
+                                HorizontalDivider(
+                                    Modifier
+                                        .weight(1f)
+                                        .padding(horizontal = 10.dp),
+                                    color = if (isCurrentPage) colorResource(R.color.primary).copy(.5f)
+                                    else colorResource(R.color.surface)
+                                )
+                                Text(
+                                    "${day.count.localized()} ${stringResource(R.string.records)}",
+                                    color = if (isCurrentPage) colorResource(R.color.secondary) else otherTextColor,
+                                )
+                            }
+                        }
                     }
                 }
             }
-            item { Spacer(modifier = Modifier.height(45.dp)) }
         }
+        Spacer(modifier = Modifier.height(45.dp))
     }
 }

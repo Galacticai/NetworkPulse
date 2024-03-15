@@ -32,8 +32,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,21 +58,26 @@ fun <T> BarChart(
     startAsScrolledToEnd: Boolean = false,
     style: BarChartStyle<T> = BarChartStyle(),
     parser: (T) -> BarData,
-    data: Collection<T>,
+    data: Iterable<T>,
     onBarClick: ((data: T, parsed: BarData, i: Int) -> Unit)? = null,
 ) {
-    var max by remember { mutableFloatStateOf(Float.MIN_VALUE) }
-    var min by remember { mutableFloatStateOf(Float.MAX_VALUE) }
-    fun range() = min..max
+    var max by rememberSaveable { mutableFloatStateOf(Float.MIN_VALUE) }
+    var min by rememberSaveable { mutableFloatStateOf(Float.MAX_VALUE) }
+    val range by remember { derivedStateOf { max..min } }
     val dataParsed by remember(data) {
         derivedStateOf {
             data.map {
                 val barData = parser(it)
                 if (barData.value > max) max = barData.value
                 if (barData.value < min) min = barData.value
-                return@map barData
+                barData
             }
         }
+    }
+    //? Must do this otherwise it wont initialize correctly
+    LaunchedEffect(data) {
+        @Suppress("UNUSED_EXPRESSION")
+        dataParsed //? Trigger derivedStateOf
     }
     if (max < min) return //? Brief moment before max and min are calculated
 
@@ -121,11 +128,14 @@ fun <T> BarChart(
             modifier = Modifier.height(style.bar.heightMax),
             verticalArrangement = Arrangement.Bottom
         ) {
+            var maxWidth by rememberSaveable { mutableIntStateOf(0) }
+
             (style.horizontalScale.count downTo 1).forEach { i ->
                 val value = max / style.horizontalScale.count * i
+                val startPadding = style.yValue.margin.calculateStartPadding(direction)
+                val endPadding = style.yValue.margin.calculateEndPadding(direction)
+
                 Box(modifier = Modifier.height(ySectionHeight)) {
-                    val startPadding = style.yValue.margin.calculateStartPadding(direction)
-                    val endPadding = style.yValue.margin.calculateEndPadding(direction)
                     Surface(
                         modifier = Modifier
                             .heightIn(max = ySectionHeight)
@@ -140,19 +150,20 @@ fun <T> BarChart(
                             bottomStart = style.yValue.bgRadius,
                             bottomEnd = style.yValue.bgRadius
                         ),
-                        color = style.yValue.bgColor(value, range(), i),
+                        color = style.yValue.bgColor(value, range, i),
                     ) {
                         Text(
                             modifier = Modifier
                                 .padding(style.yValue.padding)
                                 .onGloballyPositioned {
-                                    if (value != max) return@onGloballyPositioned
                                     val width = it.size.width
+                                    if (width < maxWidth) return@onGloballyPositioned
                                     val density = context.resources.displayMetrics.density
-                                    scaleValuesWidth = (width / density).dp + startPadding + endPadding + 2.dp
+                                    scaleValuesWidth = (it.size.width / density).dp +
+                                            startPadding + endPadding + 2.dp
                                 },
-                            text = style.yValue.format(value, range(), i),
-                            color = style.yValue.color(value, range(), i),
+                            text = style.yValue.format(value, range, i),
+                            color = style.yValue.color(value, range, i),
                             fontSize = style.yValue.fontSize,
                             fontWeight = style.yValue.fontWeight
                         )
@@ -220,7 +231,7 @@ fun <T> BarChart(
                         val bottomRadius = min(style.bar.radius / 5, 2.dp)
                         Surface(
                             modifier = Modifier.size(style.bar.width, barHeight),
-                            color = style.bar.color(dataItem, range()),
+                            color = style.bar.color(dataItem, range),
                             shape = RoundedCornerShape(
                                 topStart = style.bar.radius, topEnd = style.bar.radius,
                                 bottomStart = bottomRadius, bottomEnd = bottomRadius,
@@ -235,12 +246,12 @@ fun <T> BarChart(
                                     .heightIn(max = style.bar.heightMax)
                                     .padding(style.xValue.margin),
                                 shape = RoundedCornerShape(style.xValue.bgRadius),
-                                color = style.xValue.bgColor(dataItem, parsedItem, range()),
+                                color = style.xValue.bgColor(dataItem, parsedItem, range),
                             ) {
                                 Text(
                                     modifier = Modifier.padding(style.xValue.padding),
-                                    text = style.xValue.format(dataItem, parsedItem, range()),
-                                    color = style.xValue.color(dataItem, parsedItem, range()),
+                                    text = style.xValue.format(dataItem, parsedItem, range),
+                                    color = style.xValue.color(dataItem, parsedItem, range),
                                     fontSize = style.xValue.fontSize,
                                     fontWeight = style.xValue.fontWeight
                                 )

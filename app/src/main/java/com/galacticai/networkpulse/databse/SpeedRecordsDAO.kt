@@ -37,7 +37,8 @@ interface SpeedRecordsDAO {
     @Query(
         "select" +
                 "   min(time) as first," +
-                "   max(time) as last" +
+                "   max(time) as last," +
+                "   count(*) as count" +
                 " from logs" +
                 " group by" +
                 "   cast(( (time+:offsetMS) / 86400000 ) as int)" //? 24*60*60*1000=86400000 //?respect timezone
