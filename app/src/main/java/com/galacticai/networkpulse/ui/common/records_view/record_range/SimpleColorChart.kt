@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -41,12 +44,16 @@ fun SimpleColorChart(
     maxValuePreferred: Float? = null,
     overlay: (@Composable BoxScope.() -> Unit)? = null,
 ) {
-    assert(maxValuePreferred == null || maxValuePreferred > 0f)
-    val maxValue = maxValuePreferred
-        ?: data
-            .maxOfOrNull { it ?: 0f } //? max of data
-            .takeIf { it?.let { it >= 0f } == true } //? only if >= 0
-        ?: 0f //? 0 if null
+    val maxValue by remember(data, maxValuePreferred) {
+        derivedStateOf {
+            if (maxValuePreferred != null && maxValuePreferred > 0)
+                return@derivedStateOf maxValuePreferred
+            return@derivedStateOf data
+                .maxOfOrNull { it ?: 0f } //? max of data
+                .takeIf { it?.let { it >= 0f } == true } //? only if >= 0
+                ?: 0f //? 0 if null
+        }
+    }
 
     val color = colorResource(R.color.primary)
     val colorNone = colorResource(R.color.warningContainer)
@@ -65,8 +72,8 @@ fun SimpleColorChart(
 
             data.forEachIndexed { i, value ->
                 val startX =
-                    if (isLTR) (barWidth * i)
-                    else (size.width - (barWidth * (i + 1)))
+                    if (isLTR) barWidth * i
+                    else size.width - (barWidth * (i + 1))
                 val endX = startX + barWidth
                 val barRect = Rect(
                     left = startX,
@@ -74,9 +81,10 @@ fun SimpleColorChart(
                     right = endX,
                     bottom = size.height
                 )
+
                 drawRect(
                     color =
-                    if (value == null) colorNone
+                    if (maxValue <= 0f || value == null) colorNone
                     else if (value <= 0f) colorFail
                     else color.copy(.1f + (value / maxValue) * .9f),
                     topLeft = barRect.topLeft,

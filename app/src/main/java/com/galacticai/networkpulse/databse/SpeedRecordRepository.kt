@@ -47,12 +47,11 @@ class SpeedRecordRepository(
         var recentTimeDelta by rememberSaveable {
             mutableIntStateOf(Setting.RecentRecordsTime.defaultValue)
         }
-
-        val to by _newestTimeLive.observeAsState(System.currentTimeMillis())
         LaunchedEffect(Unit) {
             recentTimeDelta = Setting.RecentRecordsTime.get(context)
         }
 
+        val to by _newestTimeLive.observeAsState(System.currentTimeMillis())
         val from by remember(to, recentTimeDelta) { derivedStateOf { to - recentTimeDelta } }
         var records by rememberSaveable { mutableStateOf<List<SpeedRecord>>(emptyList()) }
 

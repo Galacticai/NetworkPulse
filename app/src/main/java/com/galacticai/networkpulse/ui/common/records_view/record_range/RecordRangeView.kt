@@ -14,10 +14,12 @@ import androidx.compose.ui.Modifier
 import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarData
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.sorted
+import com.galacticai.networkpulse.ui.common.records_view.record_range.RecordRangeType.Companion.toColorChartData
 import com.galacticai.networkpulse.util.Consistent
 import java.text.SimpleDateFormat
 import java.time.ZoneId
 import java.util.Locale
+import java.util.SortedSet
 
 /** Type of record range (Type of pre-processing) */
 enum class RecordRangeType {
@@ -28,7 +30,17 @@ enum class RecordRangeType {
     Hour,
 
     /** Take 1st day and average each hour */
-    Day
+    Day;
+
+    companion object {
+        //? might be better to move somewhere else but it's here for now
+        fun SortedSet<SpeedRecord>.toColorChartData(rangeType: RecordRangeType, zoneId: ZoneId) =
+            when (rangeType) {
+                All -> this.map { it.down }
+                Day -> this.toDayColorChartData(zoneId)
+                Hour -> this.toHourColorChartData(zoneId)
+            }
+    }
 }
 
 @Composable
@@ -45,11 +57,7 @@ fun RecordRangeView(
 
     val zoneId = ZoneId.systemDefault() //? much better for performance
     val sorted = records.sorted()
-    val chartData = when (rangeType) {
-        RecordRangeType.Day -> sorted.toDayColorChartData(zoneId)
-        RecordRangeType.Hour -> sorted.toHourColorChartData(zoneId)
-        else -> sorted.map { it.down }
-    }
+    val chartData = sorted.toColorChartData(rangeType, zoneId)
 
     if (showMore) {
         ModalRecordRange(records, chartData, onRecordDeleted, parser) {

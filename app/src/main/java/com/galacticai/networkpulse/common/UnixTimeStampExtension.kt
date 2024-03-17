@@ -41,6 +41,14 @@ fun Long.atStartOfHourMS(zoneId: ZoneId = ZoneId.systemDefault()): Long =
         .toInstant()
         .toEpochMilli()
 
+/** Get the unix time at the start of the minute in milliseconds ([Long]) (hh:mm:00 of the same hour) */
+fun Long.atStartOfMinuteMS(zoneId: ZoneId = ZoneId.systemDefault()): Long =
+    ZonedDateTime.ofInstant(Instant.ofEpochMilli(this), zoneId)
+        .withSecond(0)
+        .withNano(0)
+        .toInstant()
+        .toEpochMilli()
+
 /** Get the minute of the hour ([Int]) from the unix time ([Long]) */
 fun Long.getMinute(zoneId: ZoneId = ZoneId.systemDefault()): Int =
     ZonedDateTime.ofInstant(Instant.ofEpochMilli(this), zoneId)

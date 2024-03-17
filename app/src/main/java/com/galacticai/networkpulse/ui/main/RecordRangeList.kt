@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.atStartOfDayMS
 import com.galacticai.networkpulse.common.atStartOfHourMS
+import com.galacticai.networkpulse.common.atStartOfMinuteMS
 import com.galacticai.networkpulse.common.fromUTC
 import com.galacticai.networkpulse.common.models.bit_value.BitUnit
 import com.galacticai.networkpulse.common.models.bit_value.BitUnitBase
@@ -81,7 +82,8 @@ fun RecordRangeList(
     val n0 = 0.localized()
     val n00 = "$n0$n0"
     val n59 = 59.localized()
-    val haFormatter = SimpleDateFormat("h a", locale)
+    val hFormatter = SimpleDateFormat("h", locale)
+    val aFormatter = SimpleDateFormat("a", locale)
 
     val legendPadding = 7.dp
     var legendHeight by rememberSaveable { mutableIntStateOf(0) }
@@ -90,12 +92,8 @@ fun RecordRangeList(
         derivedStateOf { records.groupBy { r -> r.time.atStartOfDayMS(zoneId) } }
     }
 
+    //? For legend: (absolute max)
     val max by remember(records) { derivedStateOf { records.downMax } }
-    val maxHourAverage by remember(groupedByDay) {
-        //TODO: try to get the same value from summary instead of doing here
-        derivedStateOf { groupedByDay.values.maxOf { it.average().down ?: 0f } }
-    }
-
 
     Surface(
         color = colorResource(R.color.surface),
@@ -115,14 +113,24 @@ fun RecordRangeList(
                     if (addSpace) item { Spacer(Modifier.height(20.dp)) }
 
                     val groupedByHour = dayRecords.groupBy { r -> r.time.atStartOfHourMS(zoneId) }
+                    //? For color chart: (max of minutes
+                    val maxMinuteAverage = dayRecords
+                        .groupBy { r -> r.time.atStartOfMinuteMS(zoneId) }
+                        .map { (_, group) ->
+                            //! Not using SpeedRecord.average()
+                            //! because it averages all properties of the SpeedRecord
+                            //! and here i only need down
+                            var total = 0f
+                            for (record in group) total += record.down ?: 0f
+                            total / group.size
+                        }
+                        .maxOrNull() ?: 0f
 
                     stickyHeader { DayHeader(day, groupedByHour, records.size, locale) }
 
                     groupedByHour.forEach { (hour, hourRecords) ->
-                        val ha = haFormatter.format(hour)
-                        val haParts = ha.split(' ')
-                        val h = haParts[0]
-                        val a = haParts[1]
+                        val h = hFormatter.format(hour)
+                        val a = aFormatter.format(hour)
                         val xAxisStart = "$h:$n00 $a"
                         val xAxisEnd = "$h:$n59 $a"
                         item {
@@ -131,7 +139,7 @@ fun RecordRangeList(
                                 records = hourRecords.reversed(),
                                 onRecordDeleted = onRecordDeleted,
                                 rangeType = RecordRangeType.Hour,
-                                colorMaxValue = maxHourAverage,
+                                colorMaxValue = maxMinuteAverage,
                                 colorChartOverlay = {
                                     ColorChartOverlayText(
                                         xAxisStart,
@@ -187,9 +195,9 @@ fun RecordRangeList(
 }
 
 @Composable
-private fun LegendView(maxValue: Float, modifier: Modifier = Modifier) {
-    val max = BitValue(
-        maxValue,
+private fun LegendView(max: Float, modifier: Modifier = Modifier) {
+    val maxValue = BitValue(
+        max,
         BitUnit(BitUnitExponent.Metric.Kilo, BitUnitBase.Byte)
     ).toNearestUnit()
     val perSec = "/${durationSuffixes(LocalContext.current).seconds}"
@@ -266,7 +274,7 @@ private fun LegendView(maxValue: Float, modifier: Modifier = Modifier) {
                     letterSpacing = spacing,
                 )
                 Text(
-                    "($max$perSec)",
+                    "($maxValue$perSec)",
                     color = primary,
                     fontSize = size,
                     letterSpacing = spacing * .5f,
@@ -306,7 +314,6 @@ private fun DayHeader(
             Text(
                 text = SimpleDateFormat("EEEE dd/MM/yyyy", locale)
                     .format(dayMS),
-                modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.Bold,
             )
