@@ -49,6 +49,7 @@ import com.galacticai.networkpulse.common.models.bit_value.BitUnit
 import com.galacticai.networkpulse.common.models.bit_value.BitUnitBase
 import com.galacticai.networkpulse.common.models.bit_value.BitUnitExponent
 import com.galacticai.networkpulse.common.models.bit_value.BitValue
+import com.galacticai.networkpulse.common.reduceBetter
 import com.galacticai.networkpulse.common.ui.graphing.bar_chart.BarData
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.average
@@ -117,12 +118,9 @@ fun RecordRangeList(
                     val maxMinuteAverage = dayRecords
                         .groupBy { r -> r.time.atStartOfMinuteMS(zoneId) }
                         .map { (_, group) ->
-                            //! Not using SpeedRecord.average()
-                            //! because it averages all properties of the SpeedRecord
-                            //! and here i only need down
-                            var total = 0f
-                            for (record in group) total += record.down ?: 0f
-                            total / group.size
+                            //!? For performance:
+                            //! Not using SpeedRecord.average() because it works a lot more than needed here
+                            group.reduceBetter(0f) { a, r -> a + (r.down ?: 0f) }
                         }
                         .maxOrNull() ?: 0f
 
