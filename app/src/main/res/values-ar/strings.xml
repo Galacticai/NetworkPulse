@@ -122,4 +122,6 @@
     <string name="pulse_service">خدمة النبض</string>
     <string name="no_days_found">لا يوجد أيام</string>
     <string name="days">أيام</string>
+    <string name="location_title">رؤية شبكات WiFi</string>
+    <string name="location_text">يُطلب إذن الموقع لتخصيص سلوك التطبيق وفقًا لشبكة Wi-Fi المتصلة حاليًا.</string>
 </resources>

@@ -6,10 +6,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,12 +47,9 @@ class SettingsSlider<T : Number>(
 }, @Composable {
 
     val ctx = LocalContext.current
-    var value by rememberSaveable { mutableStateOf(setting.defaultValue as Number) }
-    Log.d("SettingsSlider init", "$value")
-    LaunchedEffect(Unit) {
-        value = setting.get(ctx)
-        Log.d("SettingsSlider get", "$value")
-    }
+
+    @Suppress("UNCHECKED_CAST")
+    var value by setting.remember() as MutableState<Number> //? T is a Number
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         val textStart = valueTextStart(value.toFloat(), range)

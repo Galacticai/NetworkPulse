@@ -23,7 +23,7 @@ import com.galacticai.networkpulse.databse.models.SpeedRecordStatus
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils
 import com.galacticai.networkpulse.models.settings.Setting
 import com.galacticai.networkpulse.ui.activities.PrepareActivity
-import com.galacticai.networkpulse.util.Grants
+import com.galacticai.networkpulse.util.Granters
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -116,7 +116,7 @@ class PulseService : Service() {
 
     @SuppressLint("MissingPermission") //? `isGranted` will check the permission
     private fun showNotification() {
-        if (!Grants.PersistentNotification.isGranted(this)) return
+        if (!Granters.PersistentNotification.isGranted(this)) return
 
         val intent = Intent(this, PrepareActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -126,7 +126,7 @@ class PulseService : Service() {
         )
 
         val builder = NotificationCompat
-            .Builder(this, Grants.PersistentNotification.channelID)
+            .Builder(this, Granters.PersistentNotification.channelID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(getString(R.string.pulse_service))
             .setContentText("testing")

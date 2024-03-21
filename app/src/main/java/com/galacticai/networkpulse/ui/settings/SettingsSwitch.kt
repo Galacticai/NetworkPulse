@@ -36,8 +36,7 @@ class SettingsSwitch(
     val onSwitched: ((Boolean) -> Unit)? = null,
 ) : SettingsItem(content = @Composable {
     val context = LocalContext.current
-    var value by rememberSaveable { mutableStateOf(setting.defaultValue) }
-    LaunchedEffect(Unit) { value = setting.get(context) }
+    var value by setting.remember()
 
     fun setValue(newValue: Boolean) {
         runBlocking(Dispatchers.IO) { Setting.Summarize.set(context, newValue) }

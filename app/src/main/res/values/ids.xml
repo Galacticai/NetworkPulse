@@ -2,5 +2,6 @@
 <resources>
     <item name="pulse_notification" type="id" />
     <item name="persistent_notification_request" type="id" />
+    <item name="location_request" type="id" />
     <item name="battery_optimization_request" type="id" />
 </resources>

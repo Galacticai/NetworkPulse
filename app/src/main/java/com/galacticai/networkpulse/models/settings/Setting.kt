@@ -1,6 +1,12 @@
 package com.galacticai.networkpulse.models.settings
 
 import android.content.Context
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.platform.LocalContext
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
@@ -59,6 +65,14 @@ sealed class Setting<T>(
         context.dataStore.edit { it[key as Preferences.Key<T>] = value }
     }
 
+    @Composable
+    fun remember(): MutableState<T> {
+        val context = LocalContext.current
+        val setting = rememberSaveable { mutableStateOf(defaultValue) }
+        LaunchedEffect(Unit) { setting.value = get(context) }
+        return setting
+    }
+
     suspend fun restoreDefault(context: Context) =
         set(context, defaultValue)
 
@@ -74,6 +88,14 @@ sealed class Setting<T>(
         }
 
         abstract suspend fun getObject(context: Context): T
+
+        @Composable
+        fun rememberObject(): MutableState<T> {
+            val context = LocalContext.current
+            val setting = rememberSaveable { mutableStateOf(defaultObject) }
+            LaunchedEffect(Unit) { setting.value = getObject(context) }
+            return setting
+        }
     }
 
     data object EnablePulseService : Setting<Boolean>(

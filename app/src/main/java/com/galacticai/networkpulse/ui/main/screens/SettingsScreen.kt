@@ -177,8 +177,7 @@ private fun itemDownloadSize(context: Context): SettingsItem {
         },
     ) {
         val entries = DownloadSize.entries
-        var selected by remember { mutableStateOf(Setting.DownloadSize.defaultObject) }
-        LaunchedEffect(Unit) { selected = Setting.DownloadSize.getObject(context) }
+        var selected by Setting.DownloadSize.rememberObject()
 
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -206,9 +205,9 @@ private fun itemDownloadPerDay(context: Context): SettingsItem {
         subtitle = context.getString(R.string.data_usage_setting_description),
     ) {
         var text by remember { mutableStateOf(context.getString(R.string.calculating)) }
+        val size by Setting.DownloadSize.rememberObject()
+        val interval by Setting.RequestInterval.remember()
         LaunchedEffect(Unit) {
-            val interval = Setting.RequestInterval.get(context)
-            val size = Setting.DownloadSize.getObject(context)
             val day = 24 * 60 * 60 * 1000
             val timesPerDay = day / interval
             val totalSize = BitValue(size.value * timesPerDay, size.unit).toNearestUnit()
@@ -243,8 +242,7 @@ private fun itemValueUnit(context: Context): SettingsItem {
         },
     ) {
         val entries = listOf(BitUnitBase.Bit.jsonable(), BitUnitBase.Byte.jsonable())
-        var selected by remember { mutableStateOf(Setting.ValueUnitBase.defaultObject) }
-        LaunchedEffect(Unit) { selected = Setting.ValueUnitBase.getObject(context) }
+        var selected by Setting.ValueUnitBase.rememberObject()
 
         Spacer(modifier = Modifier.height(10.dp))
 

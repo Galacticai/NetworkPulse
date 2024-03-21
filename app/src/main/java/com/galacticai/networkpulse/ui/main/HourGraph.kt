@@ -22,11 +22,7 @@ import com.galacticai.networkpulse.util.Consistent
 
 @Composable
 fun HourGraph(data: CubicChartData) {
-    val ctx = LocalContext.current
-    var graphWidth by remember { mutableIntStateOf(Setting.GraphCellSize.defaultValue) }
-    LaunchedEffect(Unit) {
-        graphWidth = Setting.GraphCellSize.get(ctx)
-    }
+    val graphWidth by Setting.GraphCellSize.remember()
 
     Surface(
         color = colorResource(R.color.background),

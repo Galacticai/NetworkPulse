@@ -122,4 +122,6 @@
     <string name="pulse_service">Pulse service</string>
     <string name="no_days_found">No days found</string>
     <string name="days">days</string>
+    <string name="location_title">See WiFi networks</string>
+    <string name="location_text">Location permission is required to customize the behavior according to the current WiFi network.</string>
 </resources>

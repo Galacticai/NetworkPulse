@@ -18,7 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,6 +27,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,18 +44,23 @@ import com.galacticai.networkpulse.R
 import com.galacticai.networkpulse.common.isIgnoringBatteryOptimization
 import com.galacticai.networkpulse.common.ui.CheckItem
 import com.galacticai.networkpulse.ui.common.ConfirmationButtons
-import com.galacticai.networkpulse.util.Consistent
-import com.galacticai.networkpulse.util.Consistent.screenHPadding
-import com.galacticai.networkpulse.util.Grants
 import com.galacticai.networkpulse.ui.common.ScreenTitle
 import com.galacticai.networkpulse.ui.theme.GalacticTheme
+import com.galacticai.networkpulse.util.Consistent
+import com.galacticai.networkpulse.util.Consistent.screenHPadding
+import com.galacticai.networkpulse.util.Granters
 
 class PrepareActivity : AppCompatActivity() {
     private lateinit var launcherBatteryOptimization: ActivityResultLauncher<Intent>
 
     private val doneNotificationState = mutableStateOf(false)
+    private val doneLocationState = mutableStateOf(false)
     private val doneBatteryOptimizationState = mutableStateOf(false)
-    private val isReady = derivedStateOf { doneNotificationState.value && doneBatteryOptimizationState.value }
+    private val isReady = derivedStateOf {
+        doneNotificationState.value &&
+                doneLocationState.value &&
+                doneBatteryOptimizationState.value
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,7 +73,8 @@ class PrepareActivity : AppCompatActivity() {
         //? android <13 don't require asking for notification permission
         doneNotificationState.value =
             Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-                    Grants.PersistentNotification.isGranted(this)
+                    Granters.PersistentNotification.isGranted(this)
+        doneLocationState.value = Granters.Location.isGranted(this)
         doneBatteryOptimizationState.value = isIgnoringBatteryOptimization(this)
         if (isReady.value) done()
 
@@ -93,8 +100,10 @@ class PrepareActivity : AppCompatActivity() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == R.id.persistent_notification_request) {
-            doneNotificationState.value = (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+        val granted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+        when (requestCode) {
+            R.id.persistent_notification_request -> doneNotificationState.value = granted
+            R.id.location_request -> doneLocationState.value = granted
         }
     }
 
@@ -105,9 +114,10 @@ class PrepareActivity : AppCompatActivity() {
     private fun PrepareActivityContent() {
         var size by remember { mutableStateOf(IntSize(1, 1)) }
 
-        val doneNotification by remember { doneNotificationState }
-        val doneBatteryOptimization by remember { doneBatteryOptimizationState }
-        val isReady by remember(doneNotification, doneBatteryOptimization) { isReady }
+        val doneNotification by rememberSaveable { doneNotificationState }
+        val doneLocation by rememberSaveable { doneLocationState }
+        val doneBatteryOptimization by rememberSaveable { doneBatteryOptimizationState }
+        val isReady by remember(doneNotification, doneLocation, doneBatteryOptimization) { isReady }
 
         GalacticTheme {
             Scaffold {
@@ -134,7 +144,7 @@ class PrepareActivity : AppCompatActivity() {
                     Column(Modifier.padding(it)) {
                         val weight05 = Modifier.weight(.5f)
                         Header(size, weight05)
-                        Body(doneNotification, doneBatteryOptimization)
+                        Body(doneNotification, doneLocation, doneBatteryOptimization)
                         Spacer(weight05)
                         Footer(isReady)
                     }
@@ -203,38 +213,53 @@ class PrepareActivity : AppCompatActivity() {
     }
 
     @Composable
-    private fun Body(doneNotification: Boolean, doneBatteryOptimization: Boolean) {
+    private fun Body(doneNotification: Boolean, doneLocation: Boolean, doneBatteryOptimization: Boolean) {
         Surface(
             Modifier.screenHPadding(),
             color = colorResource(R.color.background),
             shape = Consistent.shape,
             shadowElevation = 10.dp,
         ) {
+            @Composable
+            fun divider() = HorizontalDivider(
+                Modifier.padding(horizontal = 10.dp),
+                color = colorResource(R.color.surface)
+            )
+
+            val pad = Modifier.padding(10.dp)
             Column {
                 CheckItem(
-                    modifier = Modifier.padding(10.dp),
+                    modifier = pad,
                     title = stringResource(R.string.notification_permission_title),
                     subtitle = stringResource(R.string.notification_permission_text),
                     checkState = doneNotification,
                 ) {
                     if (doneNotification) return@CheckItem false
                     //? set will happen in PrepareActivity.onRequestPermissionsResult
-                    Grants.PersistentNotification.setupChannel(this@PrepareActivity)
-                    Grants.PersistentNotification.grantPermission(this@PrepareActivity)
+                    Granters.PersistentNotification.setupChannel(this@PrepareActivity)
+                    Granters.PersistentNotification.grant(this@PrepareActivity)
                     return@CheckItem false
                 }
-                Divider(
-                    Modifier.padding(horizontal = 10.dp),
-                    color = colorResource(R.color.surface),
-                )
+                divider()
                 CheckItem(
-                    modifier = Modifier.padding(10.dp),
+                    modifier = pad,
+                    title = stringResource(R.string.location_title),
+                    subtitle = stringResource(R.string.location_text),
+                    checkState = doneLocation,
+                ) {
+                    if (doneLocation) return@CheckItem false
+                    Granters.Location.grant(this@PrepareActivity)
+                    return@CheckItem false
+                }
+                divider()
+                CheckItem(
+                    modifier = pad,
                     title = stringResource(R.string.battery_optimization_title),
                     subtitle = stringResource(R.string.battery_optimization_text),
                     checkState = doneBatteryOptimization,
                 ) {
                     if (doneBatteryOptimization) return@CheckItem false
-                    Grants.BatteryOptimization.grant(this@PrepareActivity, launcherBatteryOptimization)
+                    Granters.BatteryOptimization.grant(this@PrepareActivity, launcherBatteryOptimization)
                     return@CheckItem false
                 }
             }

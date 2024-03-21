@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,16 +45,10 @@ fun RecordRangeChart(
 ) {
     val context = LocalContext.current
 
-    var graphHeight by remember { mutableIntStateOf(Setting.GraphHeight.defaultValue) }
-    var graphScaleLinesCount by remember { mutableIntStateOf(Setting.GraphScaleLinesCount.defaultValue) }
-    var graphCellSize by remember { mutableIntStateOf(Setting.GraphCellSize.defaultValue) }
-    var graphCellSpacing by remember { mutableIntStateOf(Setting.GraphCellSpacing.defaultValue) }
-    LaunchedEffect(Unit) {
-        graphCellSize = Setting.GraphCellSize.get(context)
-        graphScaleLinesCount = Setting.GraphScaleLinesCount.get(context)
-        graphHeight = Setting.GraphHeight.get(context)
-        graphCellSpacing = Setting.GraphCellSpacing.get(context)
-    }
+    val graphHeight by Setting.GraphHeight.remember()
+    val graphScaleLinesCount by Setting.GraphScaleLinesCount.remember()
+    val graphCellSize by Setting.GraphCellSize.remember()
+    val graphCellSpacing by Setting.GraphCellSpacing.remember()
 
     val selectedState = rememberModalBottomSheetState()
     var selectedRecord by remember { mutableStateOf<SpeedRecord?>(null) }

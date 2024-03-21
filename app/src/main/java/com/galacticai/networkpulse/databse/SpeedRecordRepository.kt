@@ -7,7 +7,6 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -44,13 +43,7 @@ class SpeedRecordRepository(
     /**? Because MediatorLiveData has no way to check for observers (long story) */
     @Composable
     fun rememberRecentRecords(): State<SortedSet<SpeedRecord>> {
-        var recentTimeDelta by rememberSaveable {
-            mutableIntStateOf(Setting.RecentRecordsTime.defaultValue)
-        }
-        LaunchedEffect(Unit) {
-            recentTimeDelta = Setting.RecentRecordsTime.get(context)
-        }
-
+        val recentTimeDelta by Setting.RecentRecordsTime.remember()
         val to by _newestTimeLive.observeAsState(System.currentTimeMillis())
         val from by remember(to, recentTimeDelta) { derivedStateOf { to - recentTimeDelta } }
         var records by rememberSaveable { mutableStateOf<List<SpeedRecord>>(emptyList()) }
