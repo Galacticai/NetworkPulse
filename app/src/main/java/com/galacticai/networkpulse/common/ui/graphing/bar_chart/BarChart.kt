@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -21,10 +22,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -66,12 +69,17 @@ fun <T> BarChart(
     val range by remember { derivedStateOf { max..min } }
     val dataParsed by remember(data) {
         derivedStateOf {
-            data.map {
+            var maxNew = max
+            var minNew = min
+            val parsed = data.map {
                 val barData = parser(it)
-                if (barData.value > max) max = barData.value
-                if (barData.value < min) min = barData.value
+                if (barData.value > maxNew) maxNew = barData.value
+                if (barData.value < minNew) minNew = barData.value
                 barData
             }
+            max = maxNew
+            min = minNew
+            parsed
         }
     }
     //? Must do this otherwise it wont initialize correctly
@@ -79,8 +87,17 @@ fun <T> BarChart(
         @Suppress("UNUSED_EXPRESSION")
         dataParsed //? Trigger derivedStateOf
     }
-    if (max < min) return //? Brief moment before max and min are calculated
 
+    if (max < min) {
+        BarChartContent(modifier, style) {
+            Icon(
+                imageVector = Icons.Rounded.Warning, null,
+                modifier = Modifier.align(Alignment.Center),
+                tint = MaterialTheme.colorScheme.error
+            )
+        }
+        return
+    }
 
     val rowState = rememberLazyListState()
     suspend fun scrollToEnd() = rowState.scrollToItem(rowState.layoutInfo.totalItemsCount - 1)
@@ -158,6 +175,7 @@ fun <T> BarChart(
                                 .onGloballyPositioned {
                                     val width = it.size.width
                                     if (width < maxWidth) return@onGloballyPositioned
+                                    maxWidth = width
                                     val density = context.resources.displayMetrics.density
                                     scaleValuesWidth = (it.size.width / density).dp +
                                             startPadding + endPadding + 2.dp
@@ -264,19 +282,27 @@ fun <T> BarChart(
         }
     }
 
+    BarChartContent(modifier, style) {
+        scaleLines()
+        bars()
+        scaleValues()
+        scrollToEndButton(Modifier.align(Alignment.CenterEnd))
+    }
+}
 
+@Composable
+private fun <T> BarChartContent(
+    modifier: Modifier,
+    style: BarChartStyle<T>,
+    content: @Composable BoxScope.() -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(style.bar.heightMax)
             .background(style.bgColor)
             .then(modifier),
-    ) {
-        scaleLines()
-        bars()
-        scaleValues()
-        scrollToEndButton(Modifier.align(Alignment.CenterEnd))
-    }
+    ) { content() }
 }
 
 

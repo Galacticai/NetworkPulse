@@ -34,6 +34,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.galacticai.networkpulse.R
+import com.galacticai.networkpulse.common.format
 import com.galacticai.networkpulse.common.models.bit_value.BitUnitBase
 import com.galacticai.networkpulse.common.models.bit_value.BitValue
 import com.galacticai.networkpulse.common.openURL
@@ -53,9 +54,11 @@ import com.galacticai.networkpulse.ui.settings.SettingsSlider
 import com.galacticai.networkpulse.ui.settings.SettingsSwitch
 import com.galacticai.networkpulse.util.Consistent
 import com.galacticai.networkpulse.util.Consistent.screenHPadding
+import com.galacticai.networkpulse.util.durationSuffixes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlin.time.Duration.Companion.milliseconds
 
 
 const val SETTINGS = "settings"
@@ -110,7 +113,6 @@ fun SettingsScreen() {
                         items = listOf(
                             //TODO: should I torture myself and keep this? (keep = always fetch before displaying values)
                             //itemValueUnit(ctx),
-                            itemShowSummary(ctx),
                             itemGraphHeight(ctx),
                             itemGraphScaleLinesCount(ctx),
                             itemGraphCellSize(ctx),
@@ -145,6 +147,8 @@ private fun itemEnablePulseService(context: Context): SettingsItem {
 }
 
 private fun itemPulseInterval(context: Context): SettingsItem {
+    val suffixes = durationSuffixes(context)
+    var endText: String? = null //? generate 1 time
     return SettingsSlider(
         title = context.getString(R.string.pulse_interval_setting_title),
         subtitle = context.getString(R.string.pulse_interval_setting_description),
@@ -154,12 +158,15 @@ private fun itemPulseInterval(context: Context): SettingsItem {
         valueTextStartWidth = 55.dp,
         valueTextEndWidth = 55.dp,
         valueTextStart = { v, _ ->
-            val seconds = v.toLong() / 1000
-            val m = seconds / 60
-            val s = seconds % 60
-            "${m}m${s}s"
+            v.toLong().milliseconds.format(suffixes, "", 2)
         },
-        valueTextEnd = { _, r -> "${r.endInclusive.toInt() / 1000 / 60}m" },
+        valueTextEnd = { _, r ->
+            if (endText == null) {
+                endText = r.endInclusive.toLong().milliseconds
+                    .format(suffixes, "", 2)
+            }
+            endText!!
+        },
         onFinishedValue = { reloadAppDialog(context) }
     )
 }
@@ -220,13 +227,13 @@ private fun itemDownloadPerDay(context: Context): SettingsItem {
     }
 }
 
-private fun itemShowSummary(context: Context): SettingsItem {
-    return SettingsSwitch(
-        switchTitle = context.getString(R.string.summarize_setting_title),
-        switchSubtitle = context.getString(R.string.summarize_setting_description),
-        setting = Setting.Summarize,
-    )
-}
+//private fun itemShowSummary(context: Context): SettingsItem {
+//    return SettingsSwitch(
+//        switchTitle = context.getString(R.string.summarize_setting_title),
+//        switchSubtitle = context.getString(R.string.summarize_setting_description),
+//        setting = Setting.Summarize,
+//    )
+//}
 
 
 private fun itemValueUnit(context: Context): SettingsItem {

@@ -14,7 +14,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.asLiveData
 import com.galacticai.networkpulse.databse.models.SpeedRecord
 import com.galacticai.networkpulse.databse.models.SpeedRecordUtils.sorted
-import com.galacticai.networkpulse.models.settings.Setting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.SortedSet
@@ -43,7 +42,7 @@ class SpeedRecordRepository(
     /**? Because MediatorLiveData has no way to check for observers (long story) */
     @Composable
     fun rememberRecentRecords(): State<SortedSet<SpeedRecord>> {
-        val recentTimeDelta by Setting.RecentRecordsTime.remember()
+        val recentTimeDelta = 1000 * 60 * 60 * 2
         val to by _newestTimeLive.observeAsState(System.currentTimeMillis())
         val from by remember(to, recentTimeDelta) { derivedStateOf { to - recentTimeDelta } }
         var records by rememberSaveable { mutableStateOf<List<SpeedRecord>>(emptyList()) }
